@@ -123,7 +123,7 @@ class TodoListScreen(Screen):
         self.completed_list: CompletedTaskList | None = None
 
     @property
-    def app(self) -> "CheckmateApp":
+    def app(self) -> CheckmateApp:
         return cast("CheckmateApp", super().app)
 
     def compose(self) -> ComposeResult:

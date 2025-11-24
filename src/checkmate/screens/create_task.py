@@ -161,7 +161,7 @@ class CreateTaskScreen(Screen):
         self.editing_task = task
 
     @property
-    def app(self) -> "CheckmateApp":
+    def app(self) -> CheckmateApp:
         return cast("CheckmateApp", super().app)
 
     def compose(self) -> ComposeResult:

@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Note: Requires Trusted Publishing configured in PyPI or PYPI_API_TOKEN secret
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+
+      - name: Trigger Homebrew Tap Update
+        if: "!contains(github.ref, 'rc') && !contains(github.ref, 'beta') && !contains(github.ref, 'alpha')"
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Triggering Homebrew tap update for version $VERSION"
+          
+          # Find the sdist tarball (dev_trly_checkmate-0.1.0.tar.gz)
+          SDIST=$(ls dist/*.tar.gz | head -n1)
+          if [ -z "$SDIST" ]; then
+            echo "::error::Source distribution not found"
+            exit 1
+          fi
+          
+          SHA256=$(sha256sum "$SDIST" | cut -d ' ' -f 1)
+          echo "Calculated SHA256: $SHA256"
+          
+          # Trigger repository_dispatch in the homebrew tap repo
+          gh api repos/trly/homebrew-checkmate/dispatches \
+            -f event_type=checkmate-release \
+            -f client_payload[version]="$VERSION" \
+            -f client_payload[sha256]="$SHA256"

@@ -109,5 +109,5 @@ def load_config_file(home_dir: str | None = None) -> dict[str, str]:
     try:
         content = Path(config_path).read_text()
         return load_config(content)
-    except (IOError, OSError):
+    except OSError:
         return {}

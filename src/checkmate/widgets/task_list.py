@@ -287,7 +287,7 @@ class TaskList(VerticalScroll):
         self._initialized = False
 
     @property
-    def app(self) -> "CheckmateApp":
+    def app(self) -> CheckmateApp:
         return cast("CheckmateApp", super().app)
 
     def on_mount(self) -> None:
@@ -550,7 +550,7 @@ class CompletedTaskList(VerticalScroll):
         self._initialized = False
 
     @property
-    def app(self) -> "CheckmateApp":
+    def app(self) -> CheckmateApp:
         return cast("CheckmateApp", super().app)
 
     def on_mount(self) -> None:
