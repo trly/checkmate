@@ -15,15 +15,20 @@ class Task:
     contexts: List[str] = field(default_factory=list)
     attributes: Dict[str, Any] = field(default_factory=dict)
 
-    # Internal tracking for repository to identify existing tasks
-    _original_text: Optional[str] = field(default=None, repr=False, compare=False)
-
     def __post_init__(self):
         """Parse projects and contexts from description if not provided."""
         if not self.projects:
             self.projects = re.findall(r"\+(\w+)", self.description)
         if not self.contexts:
             self.contexts = re.findall(r"@(\w+)", self.description)
+
+    @property
+    def id(self) -> Optional[str]:
+        """Get the stable task ID."""
+        val = self.attributes.get("cmid")
+        if isinstance(val, list):
+            return val[0] if val else None
+        return val
 
     @property
     def due_date(self) -> Optional[date]:
