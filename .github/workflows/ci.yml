@@ -1,11 +1,12 @@
-name: TestPyPI Release
+name: CI
 
 on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
-
-permissions:
-  contents: read
-  id-token: write
 
 jobs:
   check:
@@ -34,27 +35,15 @@ jobs:
       - name: Typecheck
         run: uv run poe typecheck
 
-      - name: Test
-        run: uv run pytest
+      - name: Test with Coverage
+        run: uv run pytest --cov=checkmate --cov-report=xml
 
-  test-release:
-    needs: check
-    runs-on: ubuntu-latest
-    environment: testpypi
-    steps:
-      - uses: actions/checkout@v4
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
-          fetch-depth: 0
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml
+          fail_ci_if_error: true
 
       - name: Build package
         run: uv build
-
-      - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          skip-existing: true
-        # Note: Requires Trusted Publishing configured for TestPyPI or TEST_PYPI_API_TOKEN secret
