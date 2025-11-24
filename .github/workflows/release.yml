@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 permissions:
   contents: write
@@ -42,6 +42,7 @@ jobs:
   release:
     needs: check
     runs-on: ubuntu-latest
+    environment: pypi
     steps:
       - uses: actions/checkout@v4
         with:
@@ -70,17 +71,17 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           echo "Triggering Homebrew tap update for version $VERSION"
-          
+
           # Find the sdist tarball (dev_trly_checkmate-0.1.0.tar.gz)
           SDIST=$(ls dist/*.tar.gz | head -n1)
           if [ -z "$SDIST" ]; then
             echo "::error::Source distribution not found"
             exit 1
           fi
-          
+
           SHA256=$(sha256sum "$SDIST" | cut -d ' ' -f 1)
           echo "Calculated SHA256: $SHA256"
-          
+
           # Trigger repository_dispatch in the homebrew tap repo
           gh api repos/trly/homebrew-checkmate/dispatches \
             -f event_type=checkmate-release \
