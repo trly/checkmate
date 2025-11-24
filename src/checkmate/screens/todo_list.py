@@ -113,6 +113,8 @@ class TodoListScreen(Screen):
         ("D", "force_delete_todo", "Force Delete"),
         ("e", "edit_todo", "Edit Todo"),
         ("C", "toggle_completed", "Toggle Completed"),
+        ("j", "cursor_down", "Down"),
+        ("k", "cursor_up", "Up"),
         ("1", "focus_todo", "Todo List"),
         ("2", "focus_completed", "Done List"),
     ]
@@ -134,6 +136,20 @@ class TodoListScreen(Screen):
             yield self.task_list
             yield self.completed_list
         yield Footer()
+
+    def action_cursor_down(self) -> None:
+        """Move cursor down in the active list."""
+        if self.task_list and self.task_list.has_focus:
+            self.task_list.action_move_down()
+        elif self.completed_list and self.completed_list.has_focus:
+            self.completed_list.action_move_down()
+
+    def action_cursor_up(self) -> None:
+        """Move cursor up in the active list."""
+        if self.task_list and self.task_list.has_focus:
+            self.task_list.action_move_up()
+        elif self.completed_list and self.completed_list.has_focus:
+            self.completed_list.action_move_up()
 
     def action_add_todo(self) -> None:
         """Show the task creation modal."""
