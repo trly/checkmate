@@ -246,6 +246,10 @@ class TaskList(VerticalScroll):
         background: $surface;
     }
 
+    TaskList:focus {
+        border: solid $accent;
+    }
+
     TaskList > TaskRow {
         padding: 0 0 1 0;
         margin: 0;
@@ -271,10 +275,12 @@ class TaskList(VerticalScroll):
         Binding("up", "move_up", "Up", show=False),
         Binding("delete", "delete", "Delete", show=False),
         Binding("s", "sort", "Sort"),
+        Binding("x", "complete_todo", "Complete Todo"),
     ]
 
     tasks = reactive([])
     focused_task_index = reactive(0)
+    can_focus = True
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -391,6 +397,31 @@ class TaskList(VerticalScroll):
 
         self.app.push_screen(SortSelectScreen(callback=on_sort_selected))
 
+    def action_complete_todo(self) -> None:
+        """Action handler for complete todo key."""
+        task = self.get_task_at_cursor()
+        if task:
+            try:
+                self.app.service.complete_task(task)
+                self.app.notify(f"Task completed: {task.description}", timeout=2.0)
+                self.refresh_tasks()
+                # Refresh completed list
+                try:
+                    self.screen.query_one("#completed-list").refresh_tasks()
+                except Exception:
+                    pass
+            except TaskOperationError as e:
+                self.app.notify(
+                    f"Failed to complete task: {e}", severity="error", timeout=5.0
+                )
+            except Exception as e:
+                logger.exception("Unexpected error completing task")
+                self.app.notify(
+                    f"Unexpected error: {e}", severity="error", timeout=5.0
+                )
+        else:
+            self.app.notify("No task selected", severity="warning", timeout=2.0)
+
     def apply_sort(self, attribute: str) -> None:
         """Apply sorting to tasks by the specified attribute.
 
@@ -451,6 +482,10 @@ class CompletedTaskList(VerticalScroll):
         display: none;
     }
 
+    CompletedTaskList:focus {
+        border: solid $accent;
+    }
+
     CompletedTaskList.visible {
         display: block;
     }
@@ -478,10 +513,37 @@ class CompletedTaskList(VerticalScroll):
     BINDINGS: ClassVar[list] = [
         Binding("down", "move_down", "Down", show=False),
         Binding("up", "move_up", "Up", show=False),
+        Binding("r", "reopen_todo", "Reopen Todo"),
     ]
+
+    def action_reopen_todo(self) -> None:
+        """Action handler for reopen todo key."""
+        task = self.get_task_at_cursor()
+        if task:
+            try:
+                self.app.service.reopen_task(task)
+                self.app.notify(f"Task reopened: {task.description}", timeout=2.0)
+                self.refresh_tasks()
+                # Refresh active list
+                try:
+                    self.screen.query_one("#task-list").refresh_tasks()
+                except Exception:
+                    pass
+            except TaskOperationError as e:
+                self.app.notify(
+                    f"Failed to reopen task: {e}", severity="error", timeout=5.0
+                )
+            except Exception as e:
+                logger.exception("Unexpected error reopening task")
+                self.app.notify(
+                    f"Unexpected error: {e}", severity="error", timeout=5.0
+                )
+        else:
+            self.app.notify("No task selected", severity="warning", timeout=2.0)
 
     tasks = reactive([])
     focused_task_index = reactive(0)
+    can_focus = True
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

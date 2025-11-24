@@ -27,8 +27,9 @@ class TodoListScreen(Screen):
         ("d", "delete_todo", "Delete Todo"),
         ("D", "force_delete_todo", "Force Delete"),
         ("e", "edit_todo", "Edit Todo"),
-        ("x", "complete_todo", "Complete Todo"),
         ("C", "toggle_completed", "Toggle Completed"),
+        ("1", "focus_todo", "Todo List"),
+        ("2", "focus_completed", "Done List"),
     ]
 
     def __init__(self):
@@ -158,29 +159,21 @@ class TodoListScreen(Screen):
                 timeout=2.0,
             )
 
-    def action_complete_todo(self) -> None:
-        """Mark the currently selected task as completed."""
-        if self.task_list and self.task_list.has_focus:
-            task = self.task_list.get_task_at_cursor()
-            if task:
-                try:
-                    self.app.service.complete_task(task)
-                    self.app.notify(f"Task completed: {task.description}", timeout=2.0)
-                    if self.task_list:
-                        self.task_list.refresh_tasks()
-                    if self.completed_list:
-                        self.completed_list.refresh_tasks()
-                except TaskOperationError as e:
-                    self.app.notify(
-                        f"Failed to complete task: {e}", severity="error", timeout=5.0
-                    )
-                except Exception as e:
-                    logger.exception("Unexpected error completing task")
-                    self.app.notify(
-                        f"Unexpected error: {e}", severity="error", timeout=5.0
-                    )
-            else:
-                self.app.notify("No task selected", severity="warning", timeout=2.0)
+
+
+    def action_focus_todo(self) -> None:
+        """Focus the todo list."""
+        if self.task_list:
+            self.task_list.focus()
+
+    def action_focus_completed(self) -> None:
+        """Focus the completed list if visible."""
+        if self.completed_list and self.completed_list.has_class("visible"):
+            self.completed_list.focus()
+        elif self.completed_list:
+            self.app.notify(
+                "Completed list is hidden", severity="warning", timeout=2.0
+            )
 
     def action_toggle_completed(self) -> None:
         """Toggle visibility of completed tasks list."""
