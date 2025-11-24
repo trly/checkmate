@@ -214,16 +214,9 @@ class CreateTaskScreen(Screen):
         task_input = self.query_one("#task-input", Input)
         due_input = self.query_one("#due-input", Input)
 
-        priority = priority_input.value.strip().upper() or None
+        priority = priority_input.value.strip() or None
         task_text = task_input.value.strip()
         due_date = due_input.value.strip() or None
-
-        # Validate priority if provided - must be single letter A-Z
-        if priority and not (len(priority) == 1 and priority.isalpha()):
-            self.notify("Priority must be a single letter A-Z", severity="error")
-            priority_input.value = ""
-            priority_input.focus()
-            return
 
         if not task_text:
             self.notify("Task description cannot be empty", severity="error")
@@ -259,6 +252,13 @@ class CreateTaskScreen(Screen):
                         "mode": "create",
                     }
                 )
+        except ValueError as e:
+            self.notify(str(e), severity="error")
+            # Focus appropriate field based on error message?
+            if "Priority" in str(e):
+                priority_input.focus()
+            elif "Date" in str(e):
+                due_input.focus()
         except Exception as e:
             self.notify(f"Error: {e!s}", severity="error")
 

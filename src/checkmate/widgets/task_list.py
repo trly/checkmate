@@ -1,7 +1,6 @@
 """Task list display widget using Textual widgets."""
 
 import re
-from datetime import datetime
 from typing import ClassVar
 
 from rich.style import Style
@@ -43,42 +42,16 @@ def _extract_due_date(task: Task) -> str:
     return ""
 
 
-def get_due_date_color(due_date_str: str) -> str:
-    """Determine the color for a due date based on how far away it is.
-
-    Args:
-        due_date_str: Due date as string in YYYY-MM-DD format.
-
-    Returns:
-        Color name: 'green' (>1 day away), 'yellow' (today), 'red' (past due)
-    """
-    if not due_date_str:
-        return "green"
-
-    try:
-        due_date = datetime.strptime(due_date_str, "%Y-%m-%d").date()
-        today = datetime.now().date()
-
-        if due_date > today:
-            return "green"
-        elif due_date == today:
-            return "yellow"
-        else:  # due_date < today
-            return "red"
-    except (ValueError, TypeError):
-        return "green"
-
-
-def get_incomplete_tasks(service: TodoService):
-    """Get list of incomplete tasks from service.
+def get_active_tasks(service: TodoService):
+    """Get list of active tasks from service.
 
     Args:
         service: TodoService instance.
 
     Returns:
-        List of incomplete Task objects.
+        List of active Task objects.
     """
-    return service.get_incomplete_tasks()
+    return service.get_active_tasks()
 
 
 def get_completed_tasks(service: TodoService):
@@ -222,7 +195,12 @@ class TaskRow(Static):
         if created:
             metadata_parts.append(Text(f"Created: {created}"))
         if due:
-            due_color = get_due_date_color(due)
+            if task.is_overdue:
+                due_color = "red"
+            elif task.is_due_today:
+                due_color = "yellow"
+            else:
+                due_color = "green"
             due_text = Text(f"Due: {due}", style=Style(color=due_color))
             metadata_parts.append(due_text)
         if completed:
@@ -308,7 +286,7 @@ class TaskList(VerticalScroll):
 
     def refresh_tasks(self) -> None:
         """Load tasks from file and refresh display."""
-        self.tasks = get_incomplete_tasks(self.service)
+        self.tasks = get_active_tasks(self.service)
         self.rebuild_layout()
 
     def rebuild_layout(self) -> None:

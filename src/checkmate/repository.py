@@ -10,13 +10,13 @@ from .models import Task
 
 class TaskRepository(ABC):
     @abstractmethod
-    def get_all(self) -> List[Task]:
-        """Get all tasks."""
+    def get_active_tasks(self) -> List[Task]:
+        """Get all active tasks."""
         pass
 
     @abstractmethod
-    def get_archived(self) -> List[Task]:
-        """Get all archived (completed) tasks."""
+    def get_completed_tasks(self) -> List[Task]:
+        """Get all completed tasks."""
         pass
 
     @abstractmethod
@@ -83,13 +83,13 @@ class FileTaskRepository(TaskRepository):
 
         return t
 
-    def get_all(self) -> List[Task]:
+    def get_active_tasks(self) -> List[Task]:
         """Get all active tasks from todo.txt."""
         todotxt = TodoTxt(str(self.todo_file))
         todotxt.parse()
         return [self._to_domain(t) for t in todotxt.tasks]
 
-    def get_archived(self) -> List[Task]:
+    def get_completed_tasks(self) -> List[Task]:
         """Get all completed tasks from done.txt."""
         donetxt = TodoTxt(str(self.done_file))
         donetxt.parse()

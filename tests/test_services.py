@@ -19,7 +19,7 @@ def test_create_task(service):
     assert task.description == "Buy milk"
     assert task.creation_date == date.today()
 
-    tasks = service.get_incomplete_tasks()
+    tasks = service.get_active_tasks()
     assert len(tasks) == 1
     assert tasks[0].description == "Buy milk"
 
@@ -37,7 +37,7 @@ def test_complete_task(service):
     assert task.is_completed
     assert task.completion_date == date.today()
 
-    incomplete = service.get_incomplete_tasks()
+    incomplete = service.get_active_tasks()
     assert len(incomplete) == 0
 
     completed = service.get_completed_tasks()
@@ -52,7 +52,7 @@ def test_update_task(service):
     assert task.description == "Buy cookies"
     assert task.priority == "B"
 
-    tasks = service.get_incomplete_tasks()
+    tasks = service.get_active_tasks()
     assert tasks[0].description == "Buy cookies"
 
 
@@ -60,5 +60,21 @@ def test_delete_task(service):
     task = service.create_task("Buy milk")
     service.delete_task(task)
 
-    tasks = service.get_incomplete_tasks()
+    tasks = service.get_active_tasks()
     assert len(tasks) == 0
+
+
+def test_create_task_validation(service):
+    # Invalid priority
+    with pytest.raises(ValueError, match="Priority must be a single uppercase letter"):
+        service.create_task("Invalid priority", priority="AB")
+
+    with pytest.raises(ValueError, match="Priority must be a single uppercase letter"):
+        service.create_task("Invalid priority", priority="1")
+
+    # Invalid date
+    with pytest.raises(ValueError, match="Date must be in YYYY-MM-DD format"):
+        service.create_task("Invalid date", due_date="2025/12/31")
+
+    with pytest.raises(ValueError, match="Date must be in YYYY-MM-DD format"):
+        service.create_task("Invalid date", due_date="invalid")

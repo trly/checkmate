@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 
 from .models import Task
@@ -9,15 +9,28 @@ class TodoService:
     def __init__(self, repository: TaskRepository):
         self.repository = repository
 
-    def get_incomplete_tasks(self) -> List[Task]:
-        """Get all incomplete tasks."""
+    def _validate_priority(self, priority: Optional[str]) -> None:
+        if priority and not (
+            len(priority) == 1 and priority.isalpha() and priority.isupper()
+        ):
+            raise ValueError("Priority must be a single uppercase letter A-Z")
+
+    def _validate_date(self, date_str: Optional[str]) -> None:
+        if date_str:
+            try:
+                datetime.strptime(date_str, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError("Date must be in YYYY-MM-DD format")
+
+    def get_active_tasks(self) -> List[Task]:
+        """Get all active tasks."""
         # The repository might return all or just active.
         # Our repository implementation splits them.
-        return self.repository.get_all()
+        return self.repository.get_active_tasks()
 
     def get_completed_tasks(self) -> List[Task]:
         """Get all completed tasks."""
-        return self.repository.get_archived()
+        return self.repository.get_completed_tasks()
 
     def create_task(
         self,
@@ -26,6 +39,11 @@ class TodoService:
         due_date: Optional[str] = None,
     ) -> Task:
         """Create a new task."""
+        if priority:
+            priority = priority.upper()
+        self._validate_priority(priority)
+        self._validate_date(due_date)
+
         task = Task(description=description, priority=priority)
         task.creation_date = date.today()
 
@@ -50,9 +68,13 @@ class TodoService:
         # If priority passed is "", we clear it. If None, we keep it?
         # Let's assume None means "no change", empty string means "remove"
         if priority is not None:
+            if priority:
+                priority = priority.upper()
+            self._validate_priority(priority)
             task.priority = priority if priority else None
 
         if due_date is not None:
+            self._validate_date(due_date)
             if due_date:
                 task.attributes["due"] = due_date
             elif "due" in task.attributes:
