@@ -11,6 +11,7 @@ from .models import Task
 
 class TaskRepositoryError(Exception):
     """Base exception for repository errors."""
+
     pass
 
 
@@ -38,15 +39,17 @@ class TaskRepository(ABC):
 
 class _TaskWithMeta(Task):
     """Internal wrapper to track persistence details."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._original_text: str | None = None
+
 
 class FileTaskRepository(TaskRepository):
     def __init__(self, todo_file: str, done_file: str):
         self.todo_file = Path(todo_file).resolve()
         self.done_file = Path(done_file).resolve()
-        
+
         if self.todo_file == self.done_file:
             raise ValueError("todo_file and done_file must be distinct")
 
@@ -72,7 +75,7 @@ class FileTaskRepository(TaskRepository):
             attrs = pytodo_attrs.copy()
 
         description = pytodo_task.description or ""
-        
+
         # Strip attributes from description to prevent duplication
         if attrs:
             for key, values in attrs.items():
@@ -82,7 +85,7 @@ class FileTaskRepository(TaskRepository):
                         description = description.replace(f"{key}:{val}", "")
                 else:
                     description = description.replace(f"{key}:{values}", "")
-            
+
             # Clean up extra whitespace
             description = " ".join(description.split())
 
@@ -192,7 +195,7 @@ class FileTaskRepository(TaskRepository):
                 removed = self._remove_by_id(self.todo_file, task.id)
                 if not removed:
                     removed = self._remove_by_id(self.done_file, task.id)
-                
+
                 if removed:
                     return
 
@@ -211,19 +214,19 @@ class FileTaskRepository(TaskRepository):
 
         found = False
         to_remove = []
-        
+
         for t in todotxt.tasks:
             attrs = getattr(t, "attributes", {})
             if not attrs:
                 continue
-            
+
             val = attrs.get("cmid")
             current_id = None
             if isinstance(val, list) and val:
                 current_id = val[0]
             elif isinstance(val, str):
                 current_id = val
-            
+
             if current_id == task_id:
                 to_remove.append(t)
                 found = True

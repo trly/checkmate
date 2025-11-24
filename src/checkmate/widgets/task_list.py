@@ -1,7 +1,11 @@
 """Task list display widget using Textual widgets."""
 
+import logging
 import re
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
+
+if TYPE_CHECKING:
+    from ..main import CheckmateApp
 
 from rich.style import Style
 from rich.text import Text
@@ -10,8 +14,11 @@ from textual.containers import VerticalScroll
 from textual.reactive import reactive
 from textual.widgets import Static
 
+from ..exceptions import TaskOperationError
 from ..models import Task
 from ..services import TodoService
+
+logger = logging.getLogger(__name__)
 
 
 def _extract_first_context(task: Task) -> str:
@@ -269,10 +276,13 @@ class TaskList(VerticalScroll):
     tasks = reactive([])
     focused_task_index = reactive(0)
 
-    def __init__(self, service: TodoService, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.service = service
         self._initialized = False
+
+    @property
+    def app(self) -> "CheckmateApp":
+        return cast("CheckmateApp", super().app)
 
     def on_mount(self) -> None:
         """Initialize on mount."""
@@ -286,7 +296,7 @@ class TaskList(VerticalScroll):
 
     def refresh_tasks(self) -> None:
         """Load tasks from file and refresh display."""
-        self.tasks = get_active_tasks(self.service)
+        self.tasks = get_active_tasks(self.app.service)
         self.rebuild_layout()
 
     def rebuild_layout(self) -> None:
@@ -330,22 +340,18 @@ class TaskList(VerticalScroll):
             return self.tasks[self.focused_task_index]
         return None
 
-    def delete_task_at_cursor(self) -> bool:
+    def delete_task_at_cursor(self) -> None:
         """Delete the task at the current cursor position.
 
-        Returns:
-            True if task was deleted, False otherwise.
+        Raises:
+            TaskOperationError: If deletion fails.
         """
         task = self.get_task_at_cursor()
         if not task:
-            return False
+            return
 
-        try:
-            self.service.delete_task(task)
-            self.refresh_tasks()
-            return True
-        except Exception:
-            return False
+        self.app.service.delete_task(task)
+        self.refresh_tasks()
 
     def move_focus_down(self) -> None:
         """Move focus to next task."""
@@ -367,7 +373,13 @@ class TaskList(VerticalScroll):
 
     def action_delete(self) -> None:
         """Action handler for delete key."""
-        self.delete_task_at_cursor()
+        try:
+            self.delete_task_at_cursor()
+        except TaskOperationError as e:
+            self.app.notify(f"Failed to delete task: {e}", severity="error")
+        except Exception as e:
+            logger.exception("Unexpected error deleting task")
+            self.app.notify(f"Unexpected error: {e}", severity="error")
 
     def action_sort(self) -> None:
         """Action handler for sort key - opens sort selection screen."""
@@ -388,8 +400,7 @@ class TaskList(VerticalScroll):
         """
         if attribute == "priority":
             self.tasks = sorted(
-                self.tasks, key=lambda t: (
-                    t.priority is None, t.priority or "")
+                self.tasks, key=lambda t: (t.priority is None, t.priority or "")
             )
         elif attribute == "context":
             self.tasks = sorted(
@@ -410,8 +421,7 @@ class TaskList(VerticalScroll):
         elif attribute == "due":
             self.tasks = sorted(
                 self.tasks,
-                key=lambda t: (_extract_due_date(
-                    t) == "", _extract_due_date(t)),
+                key=lambda t: (_extract_due_date(t) == "", _extract_due_date(t)),
             )
         elif attribute == "created":
             self.tasks = sorted(
@@ -473,10 +483,13 @@ class CompletedTaskList(VerticalScroll):
     tasks = reactive([])
     focused_task_index = reactive(0)
 
-    def __init__(self, service: TodoService, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.service = service
         self._initialized = False
+
+    @property
+    def app(self) -> "CheckmateApp":
+        return cast("CheckmateApp", super().app)
 
     def on_mount(self) -> None:
         """Initialize on mount."""
@@ -490,7 +503,7 @@ class CompletedTaskList(VerticalScroll):
 
     def refresh_tasks(self) -> None:
         """Load tasks from file and refresh display."""
-        self.tasks = get_completed_tasks(self.service)
+        self.tasks = get_completed_tasks(self.app.service)
         self.rebuild_layout()
 
     def rebuild_layout(self) -> None:

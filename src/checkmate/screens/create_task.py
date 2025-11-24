@@ -1,7 +1,11 @@
 """Task creation/editing screen component."""
 
+import logging
 from datetime import datetime
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
+
+if TYPE_CHECKING:
+    from ..main import CheckmateApp
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
@@ -10,8 +14,10 @@ from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Input, Label, Static
 
+from ..exceptions import TaskOperationError, TaskValidationError
 from ..models import Task
-from ..services import TodoService
+
+logger = logging.getLogger(__name__)
 
 
 class TaskFormSection(Static):
@@ -148,10 +154,13 @@ class CreateTaskScreen(Screen):
     }
     """
 
-    def __init__(self, service: TodoService, task: Task | None = None):
+    def __init__(self, task: Task | None = None):
         super().__init__()
-        self.service = service
         self.editing_task = task
+
+    @property
+    def app(self) -> "CheckmateApp":
+        return cast("CheckmateApp", super().app)
 
     def compose(self) -> ComposeResult:
         title = "Edit Task" if self.editing_task else "Create New Task"
@@ -218,7 +227,7 @@ class CreateTaskScreen(Screen):
         priority = priority_input.value.strip() or None
         task_text = task_input.value.strip()
         due_date = due_input.value.strip() or None
-        
+
         parsed_due_date = None
         if due_date:
             try:
@@ -236,7 +245,7 @@ class CreateTaskScreen(Screen):
         try:
             if self.editing_task:
                 # Update task
-                self.service.update_task(
+                self.app.service.update_task(
                     self.editing_task,
                     description=task_text,
                     priority=priority,
@@ -252,7 +261,7 @@ class CreateTaskScreen(Screen):
                 )
             else:
                 # Create new task
-                new_task = self.service.create_task(
+                new_task = self.app.service.create_task(
                     description=task_text, priority=priority, due_date=parsed_due_date
                 )
                 self.dismiss(
@@ -262,13 +271,17 @@ class CreateTaskScreen(Screen):
                         "mode": "create",
                     }
                 )
-        except ValueError as e:
+        except TaskValidationError as e:
             self.notify(str(e), severity="error")
-            # Focus appropriate field based on error message?
             if "Priority" in str(e):
                 priority_input.focus()
+            elif "description" in str(e).lower():
+                task_input.focus()
+        except TaskOperationError as e:
+            self.notify(f"Operation failed: {e}", severity="error")
         except Exception as e:
-            self.notify(f"Error: {e!s}", severity="error")
+            logger.exception("Unexpected error in CreateTaskScreen")
+            self.notify(f"Unexpected error: {e}", severity="error")
 
     def action_cancel(self) -> None:
         """Cancel the screen."""

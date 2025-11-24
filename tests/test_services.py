@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from checkmate.exceptions import TaskValidationError
 from checkmate.repository import FileTaskRepository
 from checkmate.services import TodoService
 
@@ -66,8 +67,24 @@ def test_delete_task(service):
 
 def test_create_task_validation(service):
     # Invalid priority
-    with pytest.raises(ValueError, match="Priority must be a single uppercase letter"):
+    with pytest.raises(
+        TaskValidationError, match="Priority must be a single uppercase letter"
+    ):
         service.create_task("Invalid priority", priority="AB")
 
-    with pytest.raises(ValueError, match="Priority must be a single uppercase letter"):
+    with pytest.raises(
+        TaskValidationError, match="Priority must be a single uppercase letter"
+    ):
         service.create_task("Invalid priority", priority="1")
+
+
+def test_create_task_empty_description(service):
+    with pytest.raises(TaskValidationError, match="Task description cannot be empty"):
+        service.create_task("")
+
+    with pytest.raises(TaskValidationError, match="Task description cannot be empty"):
+        service.create_task("   ")
+
+    task = service.create_task("Valid")
+    with pytest.raises(TaskValidationError, match="Task description cannot be empty"):
+        service.update_task(task, description="")

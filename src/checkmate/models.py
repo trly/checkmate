@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 # Type alias for attributes
 Attributes = Dict[str, Union[str, List[str]]]
@@ -21,7 +21,7 @@ class Task:
     def __post_init__(self):
         """Parse projects and contexts from description if not provided."""
         if not self.projects and not self.contexts:
-             self.refresh_metadata()
+            self.refresh_metadata()
 
     def refresh_metadata(self):
         """Parse projects and contexts from description."""

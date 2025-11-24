@@ -1,8 +1,9 @@
-from datetime import date, datetime
-from typing import List, Optional, Union
+from datetime import date
+from typing import List, Optional
 
+from .exceptions import TaskOperationError, TaskValidationError
 from .models import Task
-from .repository import TaskRepository
+from .repository import TaskRepository, TaskRepositoryError
 
 
 class TodoService:
@@ -13,17 +14,23 @@ class TodoService:
         if priority and not (
             len(priority) == 1 and priority.isalpha() and priority.isupper()
         ):
-            raise ValueError("Priority must be a single uppercase letter A-Z")
+            raise TaskValidationError("Priority must be a single uppercase letter A-Z")
 
     def get_active_tasks(self) -> List[Task]:
         """Get all active tasks."""
-        # The repository might return all or just active.
-        # Our repository implementation splits them.
-        return self.repository.get_active_tasks()
+        try:
+            # The repository might return all or just active.
+            # Our repository implementation splits them.
+            return self.repository.get_active_tasks()
+        except TaskRepositoryError as e:
+            raise TaskOperationError(f"Failed to retrieve active tasks: {e}") from e
 
     def get_completed_tasks(self) -> List[Task]:
         """Get all completed tasks."""
-        return self.repository.get_completed_tasks()
+        try:
+            return self.repository.get_completed_tasks()
+        except TaskRepositoryError as e:
+            raise TaskOperationError(f"Failed to retrieve completed tasks: {e}") from e
 
     def create_task(
         self,
@@ -32,18 +39,24 @@ class TodoService:
         due_date: Optional[date] = None,
     ) -> Task:
         """Create a new task."""
+        if not description or not description.strip():
+            raise TaskValidationError("Task description cannot be empty")
+
         if priority:
             priority = priority.upper()
         self._validate_priority(priority)
 
-        task = Task(description=description, priority=priority)
-        task.creation_date = date.today()
+        try:
+            task = Task(description=description, priority=priority)
+            task.creation_date = date.today()
 
-        if due_date:
-            task.due_date = due_date
+            if due_date:
+                task.due_date = due_date
 
-        self.repository.save(task)
-        return task
+            self.repository.save(task)
+            return task
+        except TaskRepositoryError as e:
+            raise TaskOperationError(f"Failed to create task: {e}") from e
 
     def update_task(
         self,
@@ -54,6 +67,8 @@ class TodoService:
     ) -> Task:
         """Update an existing task."""
         if description is not None:
+            if not description.strip():
+                raise TaskValidationError("Task description cannot be empty")
             task.description = description
 
         # Handle priority update (allow clearing it)
@@ -72,19 +87,31 @@ class TodoService:
         if description:
             task.refresh_metadata()
 
-        self.repository.save(task)
-        return task
+        try:
+            self.repository.save(task)
+            return task
+        except TaskRepositoryError as e:
+            raise TaskOperationError(f"Failed to update task: {e}") from e
 
     def complete_task(self, task: Task) -> None:
         """Mark a task as completed."""
-        task.complete()
-        self.repository.save(task)
+        try:
+            task.complete()
+            self.repository.save(task)
+        except TaskRepositoryError as e:
+            raise TaskOperationError(f"Failed to complete task: {e}") from e
 
     def reopen_task(self, task: Task) -> None:
         """Mark a task as incomplete."""
-        task.reopen()
-        self.repository.save(task)
+        try:
+            task.reopen()
+            self.repository.save(task)
+        except TaskRepositoryError as e:
+            raise TaskOperationError(f"Failed to reopen task: {e}") from e
 
     def delete_task(self, task: Task) -> None:
         """Delete a task."""
-        self.repository.delete(task)
+        try:
+            self.repository.delete(task)
+        except TaskRepositoryError as e:
+            raise TaskOperationError(f"Failed to delete task: {e}") from e
