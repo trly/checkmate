@@ -13,6 +13,7 @@ from textual.widgets import Footer, Header
 
 from ..exceptions import TaskOperationError
 from ..widgets.task_list import CompletedTaskList, TaskList
+from .confirm import ConfirmScreen
 from .create_task import CreateTaskScreen
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ class TodoListScreen(Screen):
     BINDINGS: ClassVar[list] = [
         ("a", "add_todo", "Add Todo"),
         ("d", "delete_todo", "Delete Todo"),
+        ("D", "force_delete_todo", "Force Delete"),
         ("e", "edit_todo", "Edit Todo"),
         ("x", "complete_todo", "Complete Todo"),
         ("shift+c", "toggle_completed", "Toggle Completed"),
@@ -66,8 +68,8 @@ class TodoListScreen(Screen):
             CreateTaskScreen(), callback=on_modal_result
         )
 
-    def action_delete_todo(self) -> None:
-        """Delete the currently selected task."""
+    def _delete_task(self) -> None:
+        """Helper to delete the task at cursor."""
         if self.task_list and self.task_list.has_focus:
             task = self.task_list.get_task_at_cursor()
             if task:
@@ -91,6 +93,37 @@ class TodoListScreen(Screen):
                 severity="warning",
                 timeout=2.0,
             )
+
+    def action_delete_todo(self) -> None:
+        """Delete the currently selected task with confirmation."""
+        if self.task_list and self.task_list.has_focus:
+            task = self.task_list.get_task_at_cursor()
+            if task:
+                def on_confirm(result: bool) -> None:
+                    if result:
+                        self._delete_task()
+
+                self.app.push_screen(
+                    ConfirmScreen(
+                        message=(
+                            "Are you sure you want to delete task:\n"
+                            f"'{task.description}'?"
+                        )
+                    ),
+                    callback=on_confirm,
+                )
+            else:
+                self.app.notify("No task selected", severity="warning", timeout=2.0)
+        elif self.completed_list and self.completed_list.has_focus:
+            self.app.notify(
+                "Deleting completed tasks is not supported",
+                severity="warning",
+                timeout=2.0,
+            )
+
+    def action_force_delete_todo(self) -> None:
+        """Delete the currently selected task without confirmation."""
+        self._delete_task()
 
     def action_edit_todo(self) -> None:
         """Edit the currently selected task."""
