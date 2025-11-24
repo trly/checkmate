@@ -28,7 +28,7 @@ class TodoListScreen(Screen):
         ("D", "force_delete_todo", "Force Delete"),
         ("e", "edit_todo", "Edit Todo"),
         ("x", "complete_todo", "Complete Todo"),
-        ("shift+c", "toggle_completed", "Toggle Completed"),
+        ("C", "toggle_completed", "Toggle Completed"),
     ]
 
     def __init__(self):
