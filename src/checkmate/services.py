@@ -1,5 +1,4 @@
 from datetime import date
-from typing import List, Optional
 
 from .exceptions import TaskOperationError, TaskValidationError
 from .models import Task
@@ -10,13 +9,13 @@ class TodoService:
     def __init__(self, repository: TaskRepository):
         self.repository = repository
 
-    def _validate_priority(self, priority: Optional[str]) -> None:
+    def _validate_priority(self, priority: str | None) -> None:
         if priority and not (
             len(priority) == 1 and priority.isalpha() and priority.isupper()
         ):
             raise TaskValidationError("Priority must be a single uppercase letter A-Z")
 
-    def get_active_tasks(self) -> List[Task]:
+    def get_active_tasks(self) -> list[Task]:
         """Get all active tasks."""
         try:
             # The repository might return all or just active.
@@ -25,7 +24,7 @@ class TodoService:
         except TaskRepositoryError as e:
             raise TaskOperationError(f"Failed to retrieve active tasks: {e}") from e
 
-    def get_completed_tasks(self) -> List[Task]:
+    def get_completed_tasks(self) -> list[Task]:
         """Get all completed tasks."""
         try:
             return self.repository.get_completed_tasks()
@@ -35,8 +34,8 @@ class TodoService:
     def create_task(
         self,
         description: str,
-        priority: Optional[str] = None,
-        due_date: Optional[date] = None,
+        priority: str | None = None,
+        due_date: date | None = None,
     ) -> Task:
         """Create a new task."""
         if not description or not description.strip():

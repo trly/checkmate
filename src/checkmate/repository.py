@@ -1,7 +1,6 @@
 import uuid
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List
 
 from pytodotxt import Task as PytodoTask
 from pytodotxt import TodoTxt
@@ -17,12 +16,12 @@ class TaskRepositoryError(Exception):
 
 class TaskRepository(ABC):
     @abstractmethod
-    def get_active_tasks(self) -> List[Task]:
+    def get_active_tasks(self) -> list[Task]:
         """Get all active tasks."""
         pass
 
     @abstractmethod
-    def get_completed_tasks(self) -> List[Task]:
+    def get_completed_tasks(self) -> list[Task]:
         """Get all completed tasks."""
         pass
 
@@ -39,6 +38,8 @@ class TaskRepository(ABC):
 
 class _TaskWithMeta(Task):
     """Internal wrapper to track persistence details."""
+
+    __slots__ = ("_original_text",)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -120,7 +121,7 @@ class FileTaskRepository(TaskRepository):
 
         return t
 
-    def get_active_tasks(self) -> List[Task]:
+    def get_active_tasks(self) -> list[Task]:
         """Get all active tasks from todo.txt."""
         try:
             todotxt = TodoTxt(str(self.todo_file))
@@ -129,7 +130,7 @@ class FileTaskRepository(TaskRepository):
         except Exception as e:
             raise TaskRepositoryError(f"Failed to load active tasks: {e}") from e
 
-    def get_completed_tasks(self) -> List[Task]:
+    def get_completed_tasks(self) -> list[Task]:
         """Get all completed tasks from done.txt."""
         try:
             donetxt = TodoTxt(str(self.done_file))

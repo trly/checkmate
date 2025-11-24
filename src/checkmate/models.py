@@ -1,21 +1,20 @@
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Dict, List, Optional, Union
 
 # Type alias for attributes
-Attributes = Dict[str, Union[str, List[str]]]
+Attributes = dict[str, str | list[str]]
 
 
-@dataclass
+@dataclass(slots=True)
 class Task:
     description: str
     is_completed: bool = False
-    priority: Optional[str] = None
-    creation_date: Optional[date] = None
-    completion_date: Optional[date] = None
-    projects: List[str] = field(default_factory=list)
-    contexts: List[str] = field(default_factory=list)
+    priority: str | None = None
+    creation_date: date | None = None
+    completion_date: date | None = None
+    projects: list[str] = field(default_factory=list)
+    contexts: list[str] = field(default_factory=list)
     attributes: Attributes = field(default_factory=dict)
 
     def __post_init__(self):
@@ -30,7 +29,7 @@ class Task:
         self.contexts = re.findall(r"@(\S+)", self.description)
 
     @property
-    def id(self) -> Optional[str]:
+    def id(self) -> str | None:
         """Get the stable task ID."""
         val = self.attributes.get("cmid")
         if isinstance(val, list):
@@ -38,7 +37,7 @@ class Task:
         return val  # type: ignore
 
     @property
-    def due_date(self) -> Optional[date]:
+    def due_date(self) -> date | None:
         """Get due date from attributes if present."""
         due_str = self.attributes.get("due")
         if not due_str:
@@ -53,7 +52,7 @@ class Task:
             return None
 
     @due_date.setter
-    def due_date(self, value: Optional[date]):
+    def due_date(self, value: date | None):
         """Set due date in attributes."""
         if value is None:
             if "due" in self.attributes:

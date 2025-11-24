@@ -2,7 +2,7 @@
 
 import argparse
 import sys
-from typing import ClassVar, Optional, Tuple
+from typing import ClassVar
 
 from textual.app import App
 
@@ -29,7 +29,7 @@ class CheckmateApp(App):
         await self.push_screen(TodoListScreen())
 
 
-def parse_args() -> Tuple[Optional[str], Optional[str]]:
+def parse_args() -> tuple[str | None, str | None]:
     """Parse command-line arguments.
 
     Returns:

@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import Optional
 
 
 def load_config(content: str) -> dict[str, str]:
@@ -38,9 +37,9 @@ def load_config(content: str) -> dict[str, str]:
 
 
 def discover_files(
-    cli_todo_file: Optional[str] = None,
-    cli_done_file: Optional[str] = None,
-    config: Optional[dict[str, str]] = None,
+    cli_todo_file: str | None = None,
+    cli_done_file: str | None = None,
+    config: dict[str, str] | None = None,
 ) -> tuple[str, str]:
     """
     Discover todo and done file paths with proper precedence.
@@ -87,7 +86,7 @@ def discover_files(
     return todo_file, done_file
 
 
-def load_config_file(home_dir: Optional[str] = None) -> dict[str, str]:
+def load_config_file(home_dir: str | None = None) -> dict[str, str]:
     """
     Load configuration from .todo/config file in home directory.
 
