@@ -25,7 +25,7 @@ def test_create_task(service):
 
 
 def test_create_task_with_priority_and_due(service):
-    task = service.create_task("Buy milk", priority="A", due_date="2025-12-31")
+    task = service.create_task("Buy milk", priority="A", due_date=date(2025, 12, 31))
     assert task.priority == "A"
     assert task.due_date == date(2025, 12, 31)
 
@@ -71,10 +71,3 @@ def test_create_task_validation(service):
 
     with pytest.raises(ValueError, match="Priority must be a single uppercase letter"):
         service.create_task("Invalid priority", priority="1")
-
-    # Invalid date
-    with pytest.raises(ValueError, match="Date must be in YYYY-MM-DD format"):
-        service.create_task("Invalid date", due_date="2025/12/31")
-
-    with pytest.raises(ValueError, match="Date must be in YYYY-MM-DD format"):
-        service.create_task("Invalid date", due_date="invalid")

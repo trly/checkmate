@@ -1,7 +1,10 @@
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
+
+# Type alias for attributes
+Attributes = Dict[str, Union[str, List[str]]]
 
 
 @dataclass
@@ -13,14 +16,18 @@ class Task:
     completion_date: Optional[date] = None
     projects: List[str] = field(default_factory=list)
     contexts: List[str] = field(default_factory=list)
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: Attributes = field(default_factory=dict)
 
     def __post_init__(self):
         """Parse projects and contexts from description if not provided."""
-        if not self.projects:
-            self.projects = re.findall(r"\+(\w+)", self.description)
-        if not self.contexts:
-            self.contexts = re.findall(r"@(\w+)", self.description)
+        if not self.projects and not self.contexts:
+             self.refresh_metadata()
+
+    def refresh_metadata(self):
+        """Parse projects and contexts from description."""
+        # Using \S to match any non-whitespace character, consistent with todo.txt spec
+        self.projects = re.findall(r"\+(\S+)", self.description)
+        self.contexts = re.findall(r"@(\S+)", self.description)
 
     @property
     def id(self) -> Optional[str]:
@@ -28,7 +35,7 @@ class Task:
         val = self.attributes.get("cmid")
         if isinstance(val, list):
             return val[0] if val else None
-        return val
+        return val  # type: ignore
 
     @property
     def due_date(self) -> Optional[date]:
@@ -41,9 +48,18 @@ class Task:
             due_str = due_str[0]
 
         try:
-            return datetime.strptime(due_str, "%Y-%m-%d").date()
+            return datetime.strptime(str(due_str), "%Y-%m-%d").date()
         except (ValueError, TypeError):
             return None
+
+    @due_date.setter
+    def due_date(self, value: Optional[date]):
+        """Set due date in attributes."""
+        if value is None:
+            if "due" in self.attributes:
+                del self.attributes["due"]
+        else:
+            self.attributes["due"] = value.strftime("%Y-%m-%d")
 
     @property
     def is_overdue(self) -> bool:

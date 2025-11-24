@@ -1,5 +1,6 @@
 """Task creation/editing screen component."""
 
+from datetime import datetime
 from typing import ClassVar
 
 from textual.app import ComposeResult
@@ -217,6 +218,15 @@ class CreateTaskScreen(Screen):
         priority = priority_input.value.strip() or None
         task_text = task_input.value.strip()
         due_date = due_input.value.strip() or None
+        
+        parsed_due_date = None
+        if due_date:
+            try:
+                parsed_due_date = datetime.strptime(due_date, "%Y-%m-%d").date()
+            except ValueError:
+                self.notify("Date must be in YYYY-MM-DD format", severity="error")
+                due_input.focus()
+                return
 
         if not task_text:
             self.notify("Task description cannot be empty", severity="error")
@@ -230,7 +240,7 @@ class CreateTaskScreen(Screen):
                     self.editing_task,
                     description=task_text,
                     priority=priority,
-                    due_date=due_date,
+                    due_date=parsed_due_date,
                 )
                 # We return the updated task description for notification
                 self.dismiss(
@@ -243,7 +253,7 @@ class CreateTaskScreen(Screen):
             else:
                 # Create new task
                 new_task = self.service.create_task(
-                    description=task_text, priority=priority, due_date=due_date
+                    description=task_text, priority=priority, due_date=parsed_due_date
                 )
                 self.dismiss(
                     result={
@@ -257,8 +267,6 @@ class CreateTaskScreen(Screen):
             # Focus appropriate field based on error message?
             if "Priority" in str(e):
                 priority_input.focus()
-            elif "Date" in str(e):
-                due_input.focus()
         except Exception as e:
             self.notify(f"Error: {e!s}", severity="error")
 

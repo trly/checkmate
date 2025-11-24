@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from .models import Task
 from .repository import TaskRepository
@@ -15,13 +15,6 @@ class TodoService:
         ):
             raise ValueError("Priority must be a single uppercase letter A-Z")
 
-    def _validate_date(self, date_str: Optional[str]) -> None:
-        if date_str:
-            try:
-                datetime.strptime(date_str, "%Y-%m-%d")
-            except ValueError:
-                raise ValueError("Date must be in YYYY-MM-DD format")
-
     def get_active_tasks(self) -> List[Task]:
         """Get all active tasks."""
         # The repository might return all or just active.
@@ -36,19 +29,18 @@ class TodoService:
         self,
         description: str,
         priority: Optional[str] = None,
-        due_date: Optional[str] = None,
+        due_date: Optional[date] = None,
     ) -> Task:
         """Create a new task."""
         if priority:
             priority = priority.upper()
         self._validate_priority(priority)
-        self._validate_date(due_date)
 
         task = Task(description=description, priority=priority)
         task.creation_date = date.today()
 
         if due_date:
-            task.attributes["due"] = due_date
+            task.due_date = due_date
 
         self.repository.save(task)
         return task
@@ -58,7 +50,7 @@ class TodoService:
         task: Task,
         description: str | None = None,
         priority: str | None = None,
-        due_date: str | None = None,
+        due_date: date | None = None,
     ) -> Task:
         """Update an existing task."""
         if description is not None:
@@ -74,15 +66,11 @@ class TodoService:
             task.priority = priority if priority else None
 
         if due_date is not None:
-            self._validate_date(due_date)
-            if due_date:
-                task.attributes["due"] = due_date
-            elif "due" in task.attributes:
-                del task.attributes["due"]
+            task.due_date = due_date
 
         # Recalculate projects/contexts if description changed
         if description:
-            task.__post_init__()
+            task.refresh_metadata()
 
         self.repository.save(task)
         return task
