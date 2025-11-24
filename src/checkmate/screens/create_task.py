@@ -1,7 +1,7 @@
 """Task creation/editing screen component."""
 
 import logging
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING, ClassVar, cast
 
 if TYPE_CHECKING:
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
-from textual.events import Resize
+from textual.events import Key, Resize
 from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Input, Label, Static
@@ -204,6 +204,42 @@ class CreateTaskScreen(Screen):
                 due_input.value = self.editing_task.due_date.strftime("%Y-%m-%d")
 
         task_input.focus()
+
+    def on_key(self, event: Key) -> None:
+        """Handle key presses for the due date input."""
+        if not self.focused or self.focused.id != "due-input":
+            return
+
+        if event.key in ("up", "down", "shift+up", "shift+down"):
+            event.stop()
+            self._adjust_due_date(event.key)
+
+    def _adjust_due_date(self, key: str) -> None:
+        """Adjust the due date based on key press."""
+        due_input = self.query_one("#due-input", Input)
+        current_value = due_input.value.strip()
+
+        target_date = date.today()
+
+        if current_value:
+            try:
+                target_date = datetime.strptime(current_value, "%Y-%m-%d").date()
+            except ValueError:
+                # If invalid date, stick with today as base
+                pass
+
+        delta_days = 0
+        if key == "up":
+            delta_days = 1
+        elif key == "down":
+            delta_days = -1
+        elif key == "shift+up":
+            delta_days = 7
+        elif key == "shift+down":
+            delta_days = -7
+
+        new_date = target_date + timedelta(days=delta_days)
+        due_input.value = new_date.strftime("%Y-%m-%d")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses."""
