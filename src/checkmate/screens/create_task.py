@@ -12,34 +12,12 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.events import Key, Resize
 from textual.reactive import reactive
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Input, Label, Static
+from textual.widgets import Button, Footer, Input, Label, Static, TextArea
 
 from ..exceptions import TaskOperationError, TaskValidationError
 from ..models import Task
 
 logger = logging.getLogger(__name__)
-
-
-class TaskFormSection(Static):
-    """A labeled form field section."""
-
-    DEFAULT_CSS = """
-    TaskFormSection {
-        width: 100%;
-        height: auto;
-        margin: 1 0;
-    }
-    
-    TaskFormSection Label {
-        width: 100%;
-        margin-bottom: 1;
-        text-style: bold;
-    }
-    
-    TaskFormSection Input {
-        width: 100%;
-    }
-    """
 
 
 class ResponsiveButtonGroup(Static):
@@ -121,36 +99,60 @@ class CreateTaskScreen(Screen):
         height: auto;
         border: solid $accent;
         background: $panel;
-        padding: 2 3;
+        padding: 1 2;
     }
     
     CreateTaskScreen Label#title {
         width: 100%;
         text-align: center;
         text-style: bold;
-        margin-bottom: 2;
-    }
-    
-    CreateTaskScreen .form-section {
-        width: 100%;
-        height: auto;
-        margin: 1 0;
-    }
-    
-    CreateTaskScreen .priority-section {
-        width: 100%;
-        height: auto;
-        margin: 1 0;
-    }
-    
-    CreateTaskScreen .priority-section Label {
-        width: 100%;
         margin-bottom: 1;
-        text-style: bold;
+        padding-top: 1;
     }
     
-    CreateTaskScreen #priority-input {
+    /* Common form section styling */
+    .form-section {
         width: 100%;
+        height: auto;
+        margin-bottom: 1;
+    }
+
+    .form-section .main-label {
+        width: 100%;
+        text-style: bold;
+        padding-bottom: 0;
+    }
+    
+    .form-section Input, .form-section TextArea {
+        width: 100%;
+    }
+
+    #task-input {
+        height: 6;
+    }
+    
+    /* Grid row for side-by-side inputs */
+    .form-row {
+        width: 100%;
+        height: auto;
+        margin-bottom: 1;
+    }
+    
+    .priority-col {
+        width: 14;
+        height: auto;
+        margin-right: 2;
+    }
+    
+    .due-date-col {
+        width: 20;
+        height: auto;
+    }
+
+    .help-text {
+        color: $text-disabled;
+        text-style: italic;
+        padding-bottom: 1;
     }
     """
 
@@ -170,18 +172,26 @@ class CreateTaskScreen(Screen):
 
             # Description field
             with Vertical(classes="form-section"):
-                yield Label("Description")
-                yield Input(id="task-input", placeholder="Enter task description")
+                yield Label("Description", classes="main-label")
+                yield Label(
+                    "Use [primary]@context[/] and [accent]+project[/] to organize",
+                    classes="help-text",
+                )
+                yield TextArea(id="task-input")
 
-            # Priority field
-            with Vertical(classes="priority-section"):
-                yield Label("Priority (A-Z)")
-                yield Input(id="priority-input", max_length=1, placeholder="Optional")
+            # Priority and Due date fields in a row
+            with Horizontal(classes="form-row"):
+                # Priority field
+                with Vertical(classes="form-section priority-col"):
+                    yield Label("Priority", classes="main-label")
+                    yield Label("(A-Z)", classes="help-text")
+                    yield Input(id="priority-input", max_length=1, placeholder="A-Z")
 
-            # Due date field
-            with Vertical(classes="form-section"):
-                yield Label("Due date (YYYY-MM-DD)")
-                yield Input(id="due-input", placeholder="Optional")
+                # Due date field
+                with Vertical(classes="form-section due-date-col"):
+                    yield Label("Due Date", classes="main-label")
+                    yield Label("YYYY-MM-DD", classes="help-text")
+                    yield Input(id="due-input", placeholder="YYYY-MM-DD")
 
             # Buttons (responsive)
             yield ResponsiveButtonGroup()
@@ -190,18 +200,19 @@ class CreateTaskScreen(Screen):
 
     def on_mount(self) -> None:
         """Focus description input on mount and prepopulate if editing."""
-        task_input = self.query_one("#task-input", Input)
+        task_input = self.query_one("#task-input", TextArea)
         priority_input = self.query_one("#priority-input", Input)
         due_input = self.query_one("#due-input", Input)
 
         # Prepopulate fields if editing
         if self.editing_task:
-            task_input.value = self.editing_task.description
+            task_input.text = self.editing_task.description
             if self.editing_task.priority:
                 priority_input.value = self.editing_task.priority
             # Extract due date
             if self.editing_task.due_date:
-                due_input.value = self.editing_task.due_date.strftime("%Y-%m-%d")
+                due_input.value = self.editing_task.due_date.strftime(
+                    "%Y-%m-%d")
 
         task_input.focus()
 
@@ -223,7 +234,8 @@ class CreateTaskScreen(Screen):
 
         if current_value:
             try:
-                target_date = datetime.strptime(current_value, "%Y-%m-%d").date()
+                target_date = datetime.strptime(
+                    current_value, "%Y-%m-%d").date()
             except ValueError:
                 # If invalid date, stick with today as base
                 pass
@@ -250,26 +262,30 @@ class CreateTaskScreen(Screen):
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle Enter key in input field."""
-        if event.input.id == "task-input":
-            self.action_submit()
+        # TextArea handles its own Enter key (for newlines)
+        # so we only handle submission for single-line inputs here
+        pass
 
     def action_submit(self) -> None:
         """Submit the task."""
 
         priority_input = self.query_one("#priority-input", Input)
-        task_input = self.query_one("#task-input", Input)
+        task_input = self.query_one("#task-input", TextArea)
         due_input = self.query_one("#due-input", Input)
 
         priority = priority_input.value.strip() or None
-        task_text = task_input.value.strip()
+        # Flatten newlines to spaces for todo.txt compatibility
+        task_text = task_input.text.strip().replace("\n", " ")
         due_date = due_input.value.strip() or None
 
         parsed_due_date = None
         if due_date:
             try:
-                parsed_due_date = datetime.strptime(due_date, "%Y-%m-%d").date()
+                parsed_due_date = datetime.strptime(
+                    due_date, "%Y-%m-%d").date()
             except ValueError:
-                self.notify("Date must be in YYYY-MM-DD format", severity="error")
+                self.notify("Date must be in YYYY-MM-DD format",
+                            severity="error")
                 due_input.focus()
                 return
 

@@ -8,3 +8,11 @@ Button {
     height: auto;
 }
 
+.context {
+    color: $primary;
+}
+
+.project {
+    color: $accent;
+}
+
