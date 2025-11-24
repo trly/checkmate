@@ -211,8 +211,7 @@ class CreateTaskScreen(Screen):
                 priority_input.value = self.editing_task.priority
             # Extract due date
             if self.editing_task.due_date:
-                due_input.value = self.editing_task.due_date.strftime(
-                    "%Y-%m-%d")
+                due_input.value = self.editing_task.due_date.strftime("%Y-%m-%d")
 
         task_input.focus()
 
@@ -234,8 +233,7 @@ class CreateTaskScreen(Screen):
 
         if current_value:
             try:
-                target_date = datetime.strptime(
-                    current_value, "%Y-%m-%d").date()
+                target_date = datetime.strptime(current_value, "%Y-%m-%d").date()
             except ValueError:
                 # If invalid date, stick with today as base
                 pass
@@ -281,11 +279,9 @@ class CreateTaskScreen(Screen):
         parsed_due_date = None
         if due_date:
             try:
-                parsed_due_date = datetime.strptime(
-                    due_date, "%Y-%m-%d").date()
+                parsed_due_date = datetime.strptime(due_date, "%Y-%m-%d").date()
             except ValueError:
-                self.notify("Date must be in YYYY-MM-DD format",
-                            severity="error")
+                self.notify("Date must be in YYYY-MM-DD format", severity="error")
                 due_input.focus()
                 return
 

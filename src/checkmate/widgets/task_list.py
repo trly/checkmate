@@ -407,7 +407,10 @@ class TaskList(VerticalScroll):
                 self.refresh_tasks()
                 # Refresh completed list
                 try:
-                    self.screen.query_one("#completed-list").refresh_tasks()
+                    completed_list = cast(
+                        "CompletedTaskList", self.screen.query_one("#completed-list")
+                    )
+                    completed_list.refresh_tasks()
                 except Exception:
                     pass
             except TaskOperationError as e:
@@ -416,9 +419,7 @@ class TaskList(VerticalScroll):
                 )
             except Exception as e:
                 logger.exception("Unexpected error completing task")
-                self.app.notify(
-                    f"Unexpected error: {e}", severity="error", timeout=5.0
-                )
+                self.app.notify(f"Unexpected error: {e}", severity="error", timeout=5.0)
         else:
             self.app.notify("No task selected", severity="warning", timeout=2.0)
 
@@ -526,7 +527,8 @@ class CompletedTaskList(VerticalScroll):
                 self.refresh_tasks()
                 # Refresh active list
                 try:
-                    self.screen.query_one("#task-list").refresh_tasks()
+                    task_list = cast("TaskList", self.screen.query_one("#task-list"))
+                    task_list.refresh_tasks()
                 except Exception:
                     pass
             except TaskOperationError as e:
@@ -535,9 +537,7 @@ class CompletedTaskList(VerticalScroll):
                 )
             except Exception as e:
                 logger.exception("Unexpected error reopening task")
-                self.app.notify(
-                    f"Unexpected error: {e}", severity="error", timeout=5.0
-                )
+                self.app.notify(f"Unexpected error: {e}", severity="error", timeout=5.0)
         else:
             self.app.notify("No task selected", severity="warning", timeout=2.0)
 
