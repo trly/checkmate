@@ -250,6 +250,14 @@ class TaskList(VerticalScroll):
         border: solid $accent;
     }
 
+    TaskList.filtered {
+        border: solid $warning;
+    }
+
+    TaskList.filtered:focus {
+        border: solid $warning-lighten-2;
+    }
+
     TaskList > TaskRow {
         padding: 0 0 1 0;
         margin: 0;
@@ -285,6 +293,76 @@ class TaskList(VerticalScroll):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._initialized = False
+        self._filter_contexts: set[str] = set()
+        self._filter_projects: set[str] = set()
+
+    @property
+    def filter_contexts(self) -> set[str]:
+        """Get the current context filter."""
+        return self._filter_contexts
+
+    @property
+    def filter_projects(self) -> set[str]:
+        """Get the current project filter."""
+        return self._filter_projects
+
+    @property
+    def is_filtered(self) -> bool:
+        """Return True if any filter is active."""
+        return bool(self._filter_contexts or self._filter_projects)
+
+    def apply_filter(self, contexts: list[str], projects: list[str]) -> None:
+        """Apply filter by contexts and/or projects.
+
+        Args:
+            contexts: List of context names to filter by (OR logic).
+            projects: List of project names to filter by (OR logic).
+        """
+        self._filter_contexts = set(contexts)
+        self._filter_projects = set(projects)
+        self._update_filtered_class()
+        if self._initialized:
+            self.rebuild_layout()
+
+    def clear_filter(self) -> None:
+        """Clear all filters."""
+        self._filter_contexts = set()
+        self._filter_projects = set()
+        self._update_filtered_class()
+        if self._initialized:
+            self.rebuild_layout()
+
+    def _update_filtered_class(self) -> None:
+        """Update the 'filtered' CSS class based on filter state."""
+        if self.is_filtered:
+            self.add_class("filtered")
+        else:
+            self.remove_class("filtered")
+
+    def _task_matches_filter(self, task: Task) -> bool:
+        """Check if a task matches the current filter.
+
+        Returns True if:
+        - No filter is active (both sets empty)
+        - Task has ANY matching context OR ANY matching project
+        """
+        if not self.is_filtered:
+            return True
+
+        # Check if task has any matching context
+        if self._filter_contexts:
+            task_contexts = set(task.contexts)
+            if task_contexts & self._filter_contexts:
+                return True
+
+        # Check if task has any matching project
+        if self._filter_projects:
+            task_projects = set(task.projects)
+            if task_projects & self._filter_projects:
+                return True
+
+        # If filter is active but no match found
+        return False
 
     @property
     def app(self) -> CheckmateApp:
@@ -306,7 +384,7 @@ class TaskList(VerticalScroll):
         self.rebuild_layout()
 
     def rebuild_layout(self) -> None:
-        """Rebuild task rows with current width."""
+        """Rebuild task rows with current width, applying any active filter."""
         # Clear existing rows
         rows = self.query(TaskRow)
         if rows:
@@ -315,10 +393,11 @@ class TaskList(VerticalScroll):
         # Calculate width (use current width or fallback)
         width = self.size.width if self.size.width > 0 else 80
 
-        # Add task rows
+        # Add task rows (filtered)
         for task in self.tasks:
-            row = TaskRow(task, max_width=width)
-            self.mount(row)
+            if self._task_matches_filter(task):
+                row = TaskRow(task, max_width=width)
+                self.mount(row)
 
         # Update focus styling
         self._update_focus_styling()

@@ -114,3 +114,17 @@ class TodoService:
             self.repository.delete(task)
         except TaskRepositoryError as e:
             raise TaskOperationError(f"Failed to delete task: {e}") from e
+
+    def get_unique_contexts(self) -> list[str]:
+        """Get sorted unique @contexts from active tasks."""
+        contexts: set[str] = set()
+        for task in self.get_active_tasks():
+            contexts.update(task.contexts)
+        return sorted(contexts)
+
+    def get_unique_projects(self) -> list[str]:
+        """Get sorted unique +projects from active tasks."""
+        projects: set[str] = set()
+        for task in self.get_active_tasks():
+            projects.update(task.projects)
+        return sorted(projects)

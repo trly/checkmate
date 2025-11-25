@@ -16,3 +16,47 @@ Button {
     color: $accent;
 }
 
+/* FilterScreen modal styles */
+FilterScreen {
+    align: center middle;
+    background: $surface 50%;
+}
+
+FilterScreen > Container {
+    width: 60;
+    height: auto;
+    max-height: 80%;
+    padding: 1 2;
+    background: $panel;
+    border: thick $accent;
+}
+
+FilterScreen Label#title {
+    width: 100%;
+    text-align: center;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+FilterScreen Label.list-label {
+    margin-top: 1;
+    text-style: bold;
+}
+
+FilterScreen SelectionList {
+    height: auto;
+    max-height: 10;
+    margin-bottom: 1;
+}
+
+FilterScreen Horizontal {
+    width: 100%;
+    height: auto;
+    align: center middle;
+    margin-top: 1;
+}
+
+FilterScreen Button {
+    margin: 0 1;
+}
+

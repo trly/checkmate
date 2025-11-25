@@ -16,6 +16,7 @@ from ..exceptions import TaskOperationError
 from ..widgets.task_list import CompletedTaskList, TaskList
 from .confirm import ConfirmScreen
 from .create_task import CreateTaskScreen
+from .filter import FilterResult, FilterScreen
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,8 @@ class TodoListScreen(Screen):
         ("d", "delete_todo", "Delete Todo"),
         ("D", "force_delete_todo", "Force Delete"),
         ("e", "edit_todo", "Edit Todo"),
+        ("f", "filter", "Filter"),
+        ("F", "clear_filter", "Clear Filter"),
         ("C", "toggle_completed", "Toggle Completed"),
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
@@ -277,3 +280,36 @@ class TodoListScreen(Screen):
             else:
                 self.completed_list.refresh_tasks()
                 self.completed_list.add_class("visible")
+
+    def action_filter(self) -> None:
+        """Open the filter screen."""
+        contexts = self.app.service.get_unique_contexts()
+        projects = self.app.service.get_unique_projects()
+
+        current_contexts: list[str] = []
+        current_projects: list[str] = []
+        if self.task_list:
+            current_contexts = list(self.task_list.filter_contexts)
+            current_projects = list(self.task_list.filter_projects)
+
+        def on_filter_result(result: FilterResult | None) -> None:
+            if result is not None and self.task_list:
+                self.task_list.apply_filter(result.contexts, result.projects)
+
+        self.app.push_screen(
+            FilterScreen(
+                contexts=contexts,
+                projects=projects,
+                selected_contexts=current_contexts,
+                selected_projects=current_projects,
+            ),
+            callback=on_filter_result,
+        )
+
+    def action_clear_filter(self) -> None:
+        """Clear any active filter."""
+        if self.task_list and self.task_list.is_filtered:
+            self.task_list.clear_filter()
+            self.app.notify("Filter cleared", timeout=2.0)
+        else:
+            self.app.notify("No filter active", severity="warning", timeout=2.0)

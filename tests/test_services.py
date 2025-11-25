@@ -88,3 +88,47 @@ def test_create_task_empty_description(service):
     task = service.create_task("Valid")
     with pytest.raises(TaskValidationError, match="Task description cannot be empty"):
         service.update_task(task, description="")
+
+
+def test_get_unique_contexts_empty(service):
+    assert service.get_unique_contexts() == []
+
+
+def test_get_unique_contexts(service):
+    service.create_task("Task one @home @work")
+    service.create_task("Task two @work @phone")
+    service.create_task("Task three")
+
+    contexts = service.get_unique_contexts()
+    assert contexts == ["home", "phone", "work"]
+
+
+def test_get_unique_contexts_excludes_completed(service):
+    task = service.create_task("Task @home @work")
+    service.create_task("Task @phone")
+    service.complete_task(task)
+
+    contexts = service.get_unique_contexts()
+    assert contexts == ["phone"]
+
+
+def test_get_unique_projects_empty(service):
+    assert service.get_unique_projects() == []
+
+
+def test_get_unique_projects(service):
+    service.create_task("Task one +backend +frontend")
+    service.create_task("Task two +frontend +mobile")
+    service.create_task("Task three")
+
+    projects = service.get_unique_projects()
+    assert projects == ["backend", "frontend", "mobile"]
+
+
+def test_get_unique_projects_excludes_completed(service):
+    task = service.create_task("Task +backend +frontend")
+    service.create_task("Task +mobile")
+    service.complete_task(task)
+
+    projects = service.get_unique_projects()
+    assert projects == ["mobile"]
