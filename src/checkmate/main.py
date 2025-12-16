@@ -5,6 +5,7 @@ import sys
 from typing import ClassVar
 
 from textual.app import App
+from textual.binding import Binding
 
 from .config import discover_files, load_config_file
 from .repository import FileTaskRepository
@@ -18,15 +19,26 @@ class CheckmateApp(App):
 
     BINDINGS: ClassVar[list] = [
         ("q", "quit", "Quit"),
+        Binding("question_mark", "toggle_help_panel", "Help", key_display="?"),
     ]
 
     def __init__(self, service: TodoService):
+        self._help_panel_visible = False
         super().__init__()
         self.service = service
 
     async def on_mount(self) -> None:
         """Push the main screen when the app starts."""
         await self.push_screen(TodoListScreen())
+
+    def action_toggle_help_panel(self) -> None:
+        """Toggle the help panel visibility."""
+        if self._help_panel_visible:
+            self.action_hide_help_panel()
+            self._help_panel_visible = False
+        else:
+            self.action_show_help_panel()
+            self._help_panel_visible = True
 
 
 def parse_args() -> tuple[str | None, str | None]:
