@@ -110,6 +110,25 @@ class CreateTaskScreen(Screen):
         padding-top: 1;
     }
     
+    .help-text {
+        height: auto;
+        width: auto;
+    }
+    
+    .help-text Label {
+        width: auto;
+        color: $text-disabled;
+        text-style: italic;
+    }
+    
+    .help-text .context {
+        color: cyan;
+    }
+    
+    .help-text .project {
+        color: yellow;
+    }
+    
     /* Common form section styling */
     .form-section {
         width: 100%;
@@ -120,7 +139,13 @@ class CreateTaskScreen(Screen):
     .form-section .main-label {
         width: 100%;
         text-style: bold;
-        padding-bottom: 0;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .form-section .help-text {
+        margin: 0 0 1 0;
+        padding: 0;
     }
     
     .form-section Input, .form-section TextArea {
@@ -149,11 +174,7 @@ class CreateTaskScreen(Screen):
         height: auto;
     }
 
-    .help-text {
-        color: $text-disabled;
-        text-style: italic;
-        padding-bottom: 1;
-    }
+
     """
 
     def __init__(self, task: Task | None = None):
@@ -173,10 +194,12 @@ class CreateTaskScreen(Screen):
             # Description field
             with Vertical(classes="form-section"):
                 yield Label("Description", classes="main-label")
-                yield Label(
-                    "Use [primary]@context[/] and [accent]+project[/] to organize",
-                    classes="help-text",
-                )
+                with Horizontal(classes="help-text"):
+                    yield Label("Use ")
+                    yield Label("@context", classes="context")
+                    yield Label(" and ")
+                    yield Label("+project", classes="project")
+                    yield Label(" to organize")
                 yield TextArea(id="task-input")
 
             # Priority and Due date fields in a row

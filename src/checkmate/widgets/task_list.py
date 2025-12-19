@@ -7,10 +7,9 @@ from typing import TYPE_CHECKING, ClassVar, cast
 if TYPE_CHECKING:
     from ..main import CheckmateApp
 
-from rich.style import Style
-from rich.text import Text
+from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import VerticalScroll
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widgets import Static
 
@@ -88,12 +87,45 @@ class TaskRow(Static):
         border: none;
     }
 
+    TaskRow .description-line {
+        width: 100%;
+        height: auto;
+    }
+
+    TaskRow .description-segment {
+        width: auto;
+        height: auto;
+    }
+
     TaskRow .context {
-        color: $primary;
+        color: cyan;
     }
 
     TaskRow .project {
-        color: $accent;
+        color: yellow;
+    }
+
+    TaskRow .metadata-line {
+        width: 100%;
+        height: auto;
+        padding-left: 4;
+    }
+
+    TaskRow .metadata-segment {
+        width: auto;
+        height: auto;
+    }
+
+    TaskRow .due-overdue {
+        color: red;
+    }
+
+    TaskRow .due-today {
+        color: yellow;
+    }
+
+    TaskRow .due-future {
+        color: green;
     }
     """
 
@@ -107,76 +139,65 @@ class TaskRow(Static):
         """Get the todo task object."""
         return self._todo_task
 
-    def _colorize_description(self, description: str) -> Text:
-        """Add color styling to contexts (@word) and projects (+word) in
-        description.
-
-        Returns a Rich Text object with styles applied.
-        """
-        if not description:
-            return Text("")
-
-        text = Text()
-        i = 0
-        while i < len(description):
-            # Check for @word (context)
-            if description[i] == "@":
-                match = re.match(r"@\w+", description[i:])
-                if match:
-                    word = match.group(0)
-                    text.append(word, style=Style(color="cyan"))
-                    i += len(word)
-                    continue
-
-            # Check for +word (project)
-            if description[i] == "+":
-                match = re.match(r"\+\w+", description[i:])
-                if match:
-                    word = match.group(0)
-                    text.append(word, style=Style(color="yellow"))
-                    i += len(word)
-                    continue
-
-            # Regular character
-            text.append(description[i])
-            i += 1
-
-        return text
-
     def _extract_due_date(self) -> str:
-        """Extract due date from task attributes.
-
-        Returns:
-            Due date string (YYYY-MM-DD or custom value) or empty string if
-            not found.
-        """
+        """Extract due date from task attributes."""
         if self._todo_task.due_date:
             return self._todo_task.due_date.strftime("%Y-%m-%d")
         return ""
 
     def _strip_metadata_from_description(self, description: str) -> str:
-        """Remove metadata tags (due:, priority:, etc.) from description.
-
-        Metadata is already displayed on the metadata line, so we don't want
-        to show it in the description text.
-        """
+        """Remove metadata tags (due:, priority:, etc.) from description."""
         if not description:
             return ""
 
-        # Remove due:value tags (handles due:YYYY-MM-DD, due:next-week, etc.)
         description = re.sub(r"\s*due:\S+", "", description)
-
-        # Remove other common metadata tags if present
         description = re.sub(r"\s*created:\S+", "", description)
         description = re.sub(r"\s*completed:\S+", "", description)
 
         return description.strip()
 
-    def _format_row(self) -> Text:
-        """Render the task row with styled description and metadata."""
+    def _parse_description(self, description: str):
+        """Parse description into segments with CSS classes.
+
+        Yields tuples of (text, css_class) where css_class may be None.
+        """
+        if not description:
+            return
+
+        i = 0
+        current_text = ""
+
+        while i < len(description):
+            if description[i] == "@":
+                match = re.match(r"@\w+", description[i:])
+                if match:
+                    if current_text:
+                        yield (current_text, None)
+                        current_text = ""
+                    yield (match.group(0), "context")
+                    i += len(match.group(0))
+                    continue
+
+            if description[i] == "+":
+                match = re.match(r"\+\w+", description[i:])
+                if match:
+                    if current_text:
+                        yield (current_text, None)
+                        current_text = ""
+                    yield (match.group(0), "project")
+                    i += len(match.group(0))
+                    continue
+
+            current_text += description[i]
+            i += 1
+
+        if current_text:
+            yield (current_text, None)
+
+    def compose(self) -> ComposeResult:
+        """Compose the task row with styled widgets."""
         task = self._todo_task
 
-        # Extract fields
         priority = task.priority if task.priority else ""
         created = str(task.creation_date) if task.creation_date else ""
         completed = str(task.completion_date) if task.completion_date else ""
@@ -187,49 +208,40 @@ class TaskRow(Static):
             else ""
         )
 
-        # Build output as Rich Text
-        output = Text()
+        with Vertical():
+            with Horizontal(classes="description-line"):
+                if priority:
+                    yield Static(f"[{priority}] ", classes="description-segment")
 
-        # Priority prefix
-        if priority:
-            output.append(f"[{priority}] ")
+                for text, css_class in self._parse_description(description):
+                    classes = "description-segment"
+                    if css_class:
+                        classes += f" {css_class}"
+                    yield Static(text, classes=classes)
 
-        # Description with styled contexts and projects
-        output.append_text(self._colorize_description(description))
-
-        # Metadata line
-        metadata_parts = []
-        if created:
-            metadata_parts.append(Text(f"Created: {created}"))
-        if due:
-            if task.is_overdue:
-                due_color = "red"
-            elif task.is_due_today:
-                due_color = "yellow"
-            else:
-                due_color = "green"
-            due_text = Text(f"Due: {due}", style=Style(color=due_color))
-            metadata_parts.append(due_text)
-        if completed:
-            metadata_parts.append(Text(f"Completed: {completed}"))
-
-        if metadata_parts:
-            # Build metadata line with separator between parts
-            metadata = Text("\n    ")
-            for i, part in enumerate(metadata_parts):
-                if i > 0:
-                    metadata.append(" | ")
-                if isinstance(part, Text):
-                    metadata.append_text(part)
+            metadata_parts = []
+            if created:
+                metadata_parts.append(("Created: " + created, None))
+            if due:
+                if task.is_overdue:
+                    due_class = "due-overdue"
+                elif task.is_due_today:
+                    due_class = "due-today"
                 else:
-                    metadata.append(str(part))
-            output.append_text(metadata)
+                    due_class = "due-future"
+                metadata_parts.append(("Due: " + due, due_class))
+            if completed:
+                metadata_parts.append(("Completed: " + completed, None))
 
-        return output
-
-    def render(self) -> Text:
-        """Render using Rich Text object."""
-        return self._format_row()
+            if metadata_parts:
+                with Horizontal(classes="metadata-line"):
+                    for i, (text, css_class) in enumerate(metadata_parts):
+                        if i > 0:
+                            yield Static(" | ", classes="metadata-segment")
+                        classes = "metadata-segment"
+                        if css_class:
+                            classes += f" {css_class}"
+                        yield Static(text, classes=classes)
 
 
 class TaskList(VerticalScroll):
