@@ -9,11 +9,11 @@ Button {
 }
 
 .context {
-    color: $primary;
+    color: $secondary;
 }
 
 .project {
-    color: $accent;
+    color: $warning;
 }
 
 /* FilterScreen modal styles */

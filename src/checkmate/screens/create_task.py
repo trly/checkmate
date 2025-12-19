@@ -122,11 +122,11 @@ class CreateTaskScreen(Screen):
     }
     
     .help-text .context {
-        color: cyan;
+        color: $secondary;
     }
     
     .help-text .project {
-        color: yellow;
+        color: $warning;
     }
     
     /* Common form section styling */

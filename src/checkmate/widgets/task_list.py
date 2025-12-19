@@ -98,11 +98,11 @@ class TaskRow(Static):
     }
 
     TaskRow .context {
-        color: cyan;
+        color: $secondary;
     }
 
     TaskRow .project {
-        color: yellow;
+        color: $warning;
     }
 
     TaskRow .metadata-line {
@@ -117,15 +117,15 @@ class TaskRow(Static):
     }
 
     TaskRow .due-overdue {
-        color: red;
+        color: $error;
     }
 
     TaskRow .due-today {
-        color: yellow;
+        color: $warning;
     }
 
     TaskRow .due-future {
-        color: green;
+        color: $success;
     }
     """
 
