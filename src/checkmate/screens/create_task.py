@@ -96,7 +96,6 @@ class CreateTaskScreen(Screen):
     
     CreateTaskScreen > Container {
         width: 100%;
-        height: auto;
         border: solid $accent;
         background: $panel;
         padding: 1 2;
