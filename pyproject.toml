@@ -32,7 +32,7 @@ dependencies = [
 Homepage = "https://github.com/trly/checkmate"
 Issues = "https://github.com/trly/checkmate/issues"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "poethepoet>=0.38.0",
     "pre-commit>=4.0.0",

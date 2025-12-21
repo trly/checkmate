@@ -30,10 +30,10 @@ class ResponsiveButtonGroup(Static):
         width: 100%;
         height: auto;
         margin-top: 2;
-    }
-    
-    ResponsiveButtonGroup Button {
-        margin-right: 1;
+        
+        Button {
+            margin-right: 1;
+        }
     }
     
     ResponsiveButtonGroup.vertical Button {
@@ -173,8 +173,6 @@ class CreateTaskScreen(Screen):
         width: 20;
         height: auto;
     }
-
-
     """
 
     def __init__(self, task: Task | None = None):

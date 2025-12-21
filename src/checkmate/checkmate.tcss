@@ -16,6 +16,36 @@ Button {
     color: $warning;
 }
 
+/* Shared task list styles for both active and completed task lists */
+TaskList, CompletedTaskList {
+    height: 1fr;
+    width: 100%;
+    background: $surface;
+    
+    &:focus {
+        border: solid $accent;
+    }
+    
+    & > TaskRow {
+        padding: 0 0 1 0;
+        margin: 0;
+        border-top: solid $panel;
+    }
+    
+    & > TaskRow.focused {
+        background: $boost;
+        color: $text;
+    }
+    
+    & > TaskRow.focused .context {
+        color: $text;
+    }
+    
+    & > TaskRow.focused .project {
+        color: $text;
+    }
+}
+
 /* FilterScreen modal styles */
 FilterScreen {
     align: center middle;

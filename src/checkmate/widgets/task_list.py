@@ -97,11 +97,11 @@ class TaskRow(Static):
         height: auto;
     }
 
-    TaskRow .context {
+    .context {
         color: $secondary;
     }
 
-    TaskRow .project {
+    .project {
         color: $warning;
     }
 
@@ -252,41 +252,18 @@ class TaskList(VerticalScroll):
 
     DEFAULT_CSS = """
     TaskList {
-        height: 1fr;
-        width: 100%;
+        /* Default border for active task list */
         border: solid $primary;
-        background: $surface;
     }
 
-    TaskList:focus {
-        border: solid $accent;
-    }
-
+    /* Highlight border when filter is active */
     TaskList.filtered {
         border: solid $warning;
     }
 
+    /* Maintain accent border when filtered and focused */
     TaskList.filtered:focus {
         border: solid $warning-lighten-2;
-    }
-
-    TaskList > TaskRow {
-        padding: 0 0 1 0;
-        margin: 0;
-        border-top: solid $panel;
-    }
-
-    TaskList > TaskRow.focused {
-        background: $boost;
-        color: $text;
-    }
-
-    TaskList > TaskRow.focused .context {
-        color: $text;
-    }
-
-    TaskList > TaskRow.focused .project {
-        color: $text;
     }
     """
 
@@ -567,38 +544,14 @@ class CompletedTaskList(VerticalScroll):
 
     DEFAULT_CSS = """
     CompletedTaskList {
-        height: 1fr;
-        width: 100%;
-        border: solid $panel;
-        background: $surface;
+        /* Hidden by default; toggled via .visible class */
         display: none;
+        border: solid $panel;
     }
 
-    CompletedTaskList:focus {
-        border: solid $accent;
-    }
-
+    /* Show completed list when user toggles visibility */
     CompletedTaskList.visible {
         display: block;
-    }
-
-    CompletedTaskList > TaskRow {
-        padding: 0 0 1 0;
-        margin: 0;
-        border-top: solid $panel;
-    }
-
-    CompletedTaskList > TaskRow.focused {
-        background: $boost;
-        color: $text;
-    }
-
-    CompletedTaskList > TaskRow.focused .context {
-        color: $text;
-    }
-
-    CompletedTaskList > TaskRow.focused .project {
-        color: $text;
     }
     """
 
