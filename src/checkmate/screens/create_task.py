@@ -44,10 +44,8 @@ class ResponsiveButtonGroup(Static):
 
     def compose(self) -> ComposeResult:
         """Create button container with appropriate layout."""
-        if self.is_vertical:
-            container = Vertical(id="button-container")
-        else:
-            container = Horizontal(id="button-container")
+        container_cls = Vertical if self.is_vertical else Horizontal
+        container = container_cls(id="button-container")
 
         with container:
             yield Button("Submit", id="submit-btn", variant="primary")
@@ -64,17 +62,14 @@ class ResponsiveButtonGroup(Static):
         """Check initial size and update layout."""
         self._check_layout()
 
-    def on_resize(self, event: Resize) -> None:
+    def on_resize(self, _event: Resize) -> None:
         """Respond to size changes."""
         self._check_layout()
 
     def _check_layout(self) -> None:
         """Determine if buttons should stack vertically."""
-        # Available width for buttons (accounting for padding)
-        available_width = self.size.width - 4  # Account for padding
-        # Estimate needed width: 2 buttons at ~10 chars each + spacing
+        available_width = self.size.width - 4
         needed_width = 28
-
         should_be_vertical = available_width < needed_width
 
         if self.is_vertical != should_be_vertical:

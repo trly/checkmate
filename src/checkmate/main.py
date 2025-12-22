@@ -6,6 +6,7 @@ from typing import ClassVar
 
 from textual.app import App
 from textual.binding import Binding
+from textual.reactive import reactive
 
 from .config import discover_files, load_config_file
 from .repository import FileTaskRepository
@@ -22,8 +23,9 @@ class CheckmateApp(App):
         Binding("question_mark", "toggle_help_panel", "Help", key_display="?"),
     ]
 
+    help_panel_visible = reactive(False)
+
     def __init__(self, service: TodoService):
-        self._help_panel_visible = False
         super().__init__()
         self.service = service
 
@@ -31,14 +33,16 @@ class CheckmateApp(App):
         """Push the main screen when the app starts."""
         await self.push_screen(TodoListScreen())
 
+    def watch_help_panel_visible(self, value: bool) -> None:
+        """Update help panel visibility when reactive property changes."""
+        if value:
+            self.action_show_help_panel()
+        else:
+            self.action_hide_help_panel()
+
     def action_toggle_help_panel(self) -> None:
         """Toggle the help panel visibility."""
-        if self._help_panel_visible:
-            self.action_hide_help_panel()
-            self._help_panel_visible = False
-        else:
-            self.action_show_help_panel()
-            self._help_panel_visible = True
+        self.help_panel_visible = not self.help_panel_visible
 
 
 def parse_args() -> tuple[str | None, str | None]:

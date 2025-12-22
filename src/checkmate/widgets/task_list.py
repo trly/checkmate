@@ -250,23 +250,6 @@ class TaskList(VerticalScroll):
     Supports keyboard navigation and deletion. Responds to terminal resize.
     """
 
-    DEFAULT_CSS = """
-    TaskList {
-        /* Default border for active task list */
-        border: solid $primary;
-    }
-
-    /* Highlight border when filter is active */
-    TaskList.filtered {
-        border: solid $warning;
-    }
-
-    /* Maintain accent border when filtered and focused */
-    TaskList.filtered:focus {
-        border: solid $warning-lighten-2;
-    }
-    """
-
     BINDINGS: ClassVar[list] = [
         Binding("down", "move_down", "Down", show=False),
         Binding("up", "move_up", "Up", show=False),
@@ -277,28 +260,18 @@ class TaskList(VerticalScroll):
 
     tasks = reactive([])
     focused_task_index = reactive(0)
+    filter_contexts = reactive(set())
+    filter_projects = reactive(set())
     can_focus = True
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._initialized = False
-        self._filter_contexts: set[str] = set()
-        self._filter_projects: set[str] = set()
-
-    @property
-    def filter_contexts(self) -> set[str]:
-        """Get the current context filter."""
-        return self._filter_contexts
-
-    @property
-    def filter_projects(self) -> set[str]:
-        """Get the current project filter."""
-        return self._filter_projects
 
     @property
     def is_filtered(self) -> bool:
         """Return True if any filter is active."""
-        return bool(self._filter_contexts or self._filter_projects)
+        return bool(self.filter_contexts or self.filter_projects)
 
     def apply_filter(self, contexts: list[str], projects: list[str]) -> None:
         """Apply filter by contexts and/or projects.
@@ -307,16 +280,22 @@ class TaskList(VerticalScroll):
             contexts: List of context names to filter by (OR logic).
             projects: List of project names to filter by (OR logic).
         """
-        self._filter_contexts = set(contexts)
-        self._filter_projects = set(projects)
+        self.filter_contexts = set(contexts)
+        self.filter_projects = set(projects)
+
+    def clear_filter(self) -> None:
+        """Clear all filters."""
+        self.filter_contexts = set()
+        self.filter_projects = set()
+
+    def watch_filter_contexts(self, _value: set) -> None:
+        """React to filter context changes."""
         self._update_filtered_class()
         if self._initialized:
             self.rebuild_layout()
 
-    def clear_filter(self) -> None:
-        """Clear all filters."""
-        self._filter_contexts = set()
-        self._filter_projects = set()
+    def watch_filter_projects(self, _value: set) -> None:
+        """React to filter project changes."""
         self._update_filtered_class()
         if self._initialized:
             self.rebuild_layout()
@@ -339,15 +318,15 @@ class TaskList(VerticalScroll):
             return True
 
         # Check if task has any matching context
-        if self._filter_contexts:
+        if self.filter_contexts:
             task_contexts = set(task.contexts)
-            if task_contexts & self._filter_contexts:
+            if task_contexts & self.filter_contexts:
                 return True
 
         # Check if task has any matching project
-        if self._filter_projects:
+        if self.filter_projects:
             task_projects = set(task.projects)
-            if task_projects & self._filter_projects:
+            if task_projects & self.filter_projects:
                 return True
 
         # If filter is active but no match found
@@ -403,6 +382,11 @@ class TaskList(VerticalScroll):
     def watch_focused_task_index(self, _index: int) -> None:
         """Update focus styling when index changes."""
         self._update_focus_styling()
+
+    def watch_tasks(self, _value: list) -> None:
+        """Rebuild layout when tasks change."""
+        if self._initialized:
+            self.rebuild_layout()
 
     def get_task_at_cursor(self):
         """Get the Task object at the current cursor position.
@@ -642,6 +626,11 @@ class CompletedTaskList(VerticalScroll):
     def watch_focused_task_index(self, _index: int) -> None:
         """Update focus styling when index changes."""
         self._update_focus_styling()
+
+    def watch_tasks(self, _value: list) -> None:
+        """Rebuild layout when tasks change."""
+        if self._initialized:
+            self.rebuild_layout()
 
     def get_task_at_cursor(self):
         """Get the Task object at the current cursor position.

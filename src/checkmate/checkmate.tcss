@@ -21,9 +21,18 @@ TaskList, CompletedTaskList {
     height: 1fr;
     width: 100%;
     background: $surface;
+    border: solid $primary;
     
     &:focus {
         border: solid $accent;
+    }
+    
+    &.filtered {
+        border: solid $warning;
+    }
+
+    &.filtered:focus {
+        border: solid $warning-lighten-2;
     }
     
     & > TaskRow {

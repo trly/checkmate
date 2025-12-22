@@ -5,6 +5,7 @@ from typing import ClassVar
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
+from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Label, SelectionList
 from textual.widgets.selection_list import Selection
@@ -26,6 +27,9 @@ class FilterScreen(ModalScreen[FilterResult | None]):
         ("enter", "apply", "Apply"),
     ]
 
+    selected_contexts = reactive(set())
+    selected_projects = reactive(set())
+
     def __init__(
         self,
         contexts: list[str],
@@ -36,8 +40,8 @@ class FilterScreen(ModalScreen[FilterResult | None]):
         super().__init__()
         self._contexts = contexts
         self._projects = projects
-        self._selected_contexts = set(selected_contexts or [])
-        self._selected_projects = set(selected_projects or [])
+        self.selected_contexts = set(selected_contexts or [])
+        self.selected_projects = set(selected_projects or [])
 
     def compose(self) -> ComposeResult:
         with Container():
@@ -49,7 +53,7 @@ class FilterScreen(ModalScreen[FilterResult | None]):
                     Selection(
                         f"@{ctx}",
                         ctx,
-                        initial_state=(ctx in self._selected_contexts),
+                        initial_state=(ctx in self.selected_contexts),
                     )
                     for ctx in self._contexts
                 ]
@@ -60,7 +64,7 @@ class FilterScreen(ModalScreen[FilterResult | None]):
                     Selection(
                         f"+{proj}",
                         proj,
-                        initial_state=(proj in self._selected_projects),
+                        initial_state=(proj in self.selected_projects),
                     )
                     for proj in self._projects
                 ]
