@@ -266,7 +266,6 @@ class TaskList(VerticalScroll):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._initialized = False
 
     @property
     def is_filtered(self) -> bool:
@@ -291,14 +290,12 @@ class TaskList(VerticalScroll):
     def watch_filter_contexts(self, _value: set) -> None:
         """React to filter context changes."""
         self._update_filtered_class()
-        if self._initialized:
-            self.rebuild_layout()
+        self.rebuild_layout()
 
     def watch_filter_projects(self, _value: set) -> None:
         """React to filter project changes."""
         self._update_filtered_class()
-        if self._initialized:
-            self.rebuild_layout()
+        self.rebuild_layout()
 
     def _update_filtered_class(self) -> None:
         """Update the 'filtered' CSS class based on filter state."""
@@ -338,13 +335,11 @@ class TaskList(VerticalScroll):
 
     def on_mount(self) -> None:
         """Initialize on mount."""
-        self._initialized = True
         self.refresh_tasks()
 
     def on_resize(self, _event) -> None:
         """Handle terminal resize."""
-        if self._initialized:
-            self.rebuild_layout()
+        self.rebuild_layout()
 
     def refresh_tasks(self) -> None:
         """Load tasks from file and refresh display."""
@@ -385,8 +380,7 @@ class TaskList(VerticalScroll):
 
     def watch_tasks(self, _value: list) -> None:
         """Rebuild layout when tasks change."""
-        if self._initialized:
-            self.rebuild_layout()
+        self.rebuild_layout()
 
     def get_task_at_cursor(self):
         """Get the Task object at the current cursor position.
@@ -575,7 +569,6 @@ class CompletedTaskList(VerticalScroll):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._initialized = False
 
     @property
     def app(self) -> CheckmateApp:
@@ -583,13 +576,11 @@ class CompletedTaskList(VerticalScroll):
 
     def on_mount(self) -> None:
         """Initialize on mount."""
-        self._initialized = True
         self.refresh_tasks()
 
     def on_resize(self, _event) -> None:
         """Handle terminal resize."""
-        if self._initialized:
-            self.rebuild_layout()
+        self.rebuild_layout()
 
     def refresh_tasks(self) -> None:
         """Load tasks from file and refresh display."""
@@ -629,8 +620,7 @@ class CompletedTaskList(VerticalScroll):
 
     def watch_tasks(self, _value: list) -> None:
         """Rebuild layout when tasks change."""
-        if self._initialized:
-            self.rebuild_layout()
+        self.rebuild_layout()
 
     def get_task_at_cursor(self):
         """Get the Task object at the current cursor position.
