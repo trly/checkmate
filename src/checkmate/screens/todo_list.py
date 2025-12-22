@@ -313,3 +313,51 @@ class TodoListScreen(Screen):
             self.app.notify("Filter cleared", timeout=2.0)
         else:
             self.app.notify("No filter active", severity="warning", timeout=2.0)
+
+    def _has_selected_task_in_todo(self) -> bool:
+        """Check if a task is selected in the todo list."""
+        if not self.task_list or not self.task_list.has_focus:
+            return False
+        return self.task_list.get_task_at_cursor() is not None
+
+    def _has_selected_task_in_completed(self) -> bool:
+        """Check if a task is selected in the completed list."""
+        if (
+            not self.completed_list
+            or not self.completed_list.has_focus
+            or not self.completed_list.has_class("visible")
+        ):
+            return False
+        return self.completed_list.get_task_at_cursor() is not None
+
+    def _has_tasks(self) -> bool:
+        """Check if there are any tasks in the todo list."""
+        if not self.task_list:
+            return False
+        return len(self.task_list.tasks) > 0
+
+    def check_action(self, action: str, _params) -> bool | None:
+        """Check if an action is available based on current state.
+
+        Returns:
+            True to show and run the action
+            False to hide the action
+            None to disable (show dimmed) the action
+        """
+        # Todo list task actions
+        if action in ("delete_todo", "force_delete_todo", "edit_todo", "complete_todo"):
+            return self._has_selected_task_in_todo()
+
+        # Completed list task actions
+        if action == "reopen_todo":
+            return self._has_selected_task_in_completed()
+
+        # Filter actions
+        if action == "filter":
+            return self._has_tasks()
+
+        if action == "clear_filter":
+            return self.task_list.is_filtered if self.task_list else False
+
+        # Everything else is always available
+        return True
