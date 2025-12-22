@@ -470,19 +470,19 @@ class TaskList(VerticalScroll):
             self.app.notify("No task selected", severity="warning", timeout=2.0)
 
     def check_action(self, action: str, parameters) -> bool | None:
-         """Check if a widget action is available.
+        """Check if a widget action is available.
 
-         Returns:
-             True to show and run the action
-             False to hide the action
-         """
-         if action == "sort":
-             return len(self.tasks) > 0
+        Returns:
+            True to show and run the action
+            False to hide the action
+        """
+        if action == "sort":
+            return len(self.tasks) > 0
 
-         if action == "complete_todo":
-             return self.get_task_at_cursor() is not None
+        if action == "complete_todo":
+            return self.get_task_at_cursor() is not None
 
-         return True
+        return True
 
     def apply_sort(self, attribute: str) -> None:
         """Apply sorting to tasks by the specified attribute.
@@ -666,13 +666,13 @@ class CompletedTaskList(VerticalScroll):
         self.move_focus_up()
 
     def check_action(self, action: str, parameters) -> bool | None:
-         """Check if a widget action is available.
+        """Check if a widget action is available.
 
-         Returns:
-             True to show and run the action
-             False to hide the action
-         """
-         if action == "reopen_todo":
-             return self.get_task_at_cursor() is not None
+        Returns:
+            True to show and run the action
+            False to hide the action
+        """
+        if action == "reopen_todo":
+            return self.get_task_at_cursor() is not None
 
-         return True
+        return True

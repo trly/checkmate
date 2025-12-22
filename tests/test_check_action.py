@@ -13,7 +13,7 @@ def app_with_tasks(tmp_path):
     """Create an app with some test tasks."""
     todo_file = tmp_path / "todo.txt"
     todo_file.write_text(
-        "Task 1\n" "Task 2 +project @context\n" "(A) Task 3 due:2025-01-01\n"
+        "Task 1\nTask 2 +project @context\n(A) Task 3 due:2025-01-01\n"
     )
     done_file = tmp_path / "done.txt"
     done_file.write_text("x 2025-01-01 Task 1 (completed)\n")
