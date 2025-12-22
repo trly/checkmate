@@ -336,7 +336,7 @@ class TodoListScreen(Screen):
             return False
         return len(self.task_list.tasks) > 0
 
-    def check_action(self, action: str, _params) -> bool | None:
+    def check_action(self, action: str, parameters) -> bool | None:
         """Check if an action is available based on current state.
 
         Returns:
