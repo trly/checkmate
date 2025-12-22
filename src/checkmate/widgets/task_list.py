@@ -220,7 +220,9 @@ class TaskRow(Static):
         with Vertical():
             with Horizontal(classes="description-line"):
                 if priority:
-                    yield Static(f"[{priority}] ", classes="description-segment", expand=False)
+                    yield Static(
+                        f"[{priority}] ", classes="description-segment", expand=False
+                    )
 
                 for text, css_class in self._parse_description(description):
                     classes = "description-segment"
@@ -246,7 +248,9 @@ class TaskRow(Static):
                 with Horizontal(classes="metadata-line"):
                     for i, (text, css_class) in enumerate(metadata_parts):
                         if i > 0:
-                            yield Static(" | ", classes="metadata-segment", expand=False)
+                            yield Static(
+                                " | ", classes="metadata-segment", expand=False
+                            )
                         classes = "metadata-segment"
                         if css_class:
                             classes += f" {css_class}"
