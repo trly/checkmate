@@ -47,11 +47,11 @@ TaskList, CompletedTaskList {
     }
     
     & > TaskRow.focused .context {
-        color: $text;
+        color: $secondary;
     }
     
     & > TaskRow.focused .project {
-        color: $text;
+        color: $warning;
     }
 }
 

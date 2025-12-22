@@ -87,33 +87,42 @@ class TaskRow(Static):
         border: none;
     }
 
+    TaskRow > Vertical {
+        height: auto;
+        width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+
     TaskRow .description-line {
         width: 100%;
-        height: auto;
+        height: 1;
     }
 
     TaskRow .description-segment {
         width: auto;
-        height: auto;
+        height: 1;
     }
 
     .context {
         color: $secondary;
+        text-style: bold;
     }
 
     .project {
         color: $warning;
+        text-style: bold;
     }
 
     TaskRow .metadata-line {
         width: 100%;
-        height: auto;
+        height: 1;
         padding-left: 4;
     }
 
     TaskRow .metadata-segment {
         width: auto;
-        height: auto;
+        height: 1;
     }
 
     TaskRow .due-overdue {
@@ -211,13 +220,13 @@ class TaskRow(Static):
         with Vertical():
             with Horizontal(classes="description-line"):
                 if priority:
-                    yield Static(f"[{priority}] ", classes="description-segment")
+                    yield Static(f"[{priority}] ", classes="description-segment", expand=False)
 
                 for text, css_class in self._parse_description(description):
                     classes = "description-segment"
                     if css_class:
                         classes += f" {css_class}"
-                    yield Static(text, classes=classes)
+                    yield Static(text, classes=classes, expand=False)
 
             metadata_parts = []
             if created:
@@ -237,11 +246,11 @@ class TaskRow(Static):
                 with Horizontal(classes="metadata-line"):
                     for i, (text, css_class) in enumerate(metadata_parts):
                         if i > 0:
-                            yield Static(" | ", classes="metadata-segment")
+                            yield Static(" | ", classes="metadata-segment", expand=False)
                         classes = "metadata-segment"
                         if css_class:
                             classes += f" {css_class}"
-                        yield Static(text, classes=classes)
+                        yield Static(text, classes=classes, expand=False)
 
 
 class TaskList(VerticalScroll):
