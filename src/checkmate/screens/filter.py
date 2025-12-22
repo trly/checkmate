@@ -1,7 +1,6 @@
 """Filter modal screen for selecting contexts and projects."""
 
-from dataclasses import dataclass
-from typing import ClassVar
+from typing import ClassVar, NamedTuple
 
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
@@ -11,8 +10,7 @@ from textual.widgets import Button, Label, SelectionList
 from textual.widgets.selection_list import Selection
 
 
-@dataclass
-class FilterResult:
+class FilterResult(NamedTuple):
     """Result returned when filter is applied."""
 
     contexts: list[str]
