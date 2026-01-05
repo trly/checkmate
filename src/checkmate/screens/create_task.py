@@ -248,7 +248,10 @@ class CreateTaskScreen(Screen):
             event.stop()
             self._adjust_priority(event.key)
         elif self.focused.id == "due-input" and event.key in (
-            "up", "down", "shift+up", "shift+down"
+            "up",
+            "down",
+            "shift+up",
+            "shift+down",
         ):
             event.stop()
             self._adjust_due_date(event.key)
