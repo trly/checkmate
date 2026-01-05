@@ -240,13 +240,37 @@ class CreateTaskScreen(Screen):
         task_input.focus()
 
     def on_key(self, event: Key) -> None:
-        """Handle key presses for the due date input."""
-        if not self.focused or self.focused.id != "due-input":
+        """Handle key presses for priority and due date inputs."""
+        if not self.focused:
             return
 
-        if event.key in ("up", "down", "shift+up", "shift+down"):
+        if self.focused.id == "priority-input" and event.key in ("up", "down"):
+            event.stop()
+            self._adjust_priority(event.key)
+        elif self.focused.id == "due-input" and event.key in (
+            "up", "down", "shift+up", "shift+down"
+        ):
             event.stop()
             self._adjust_due_date(event.key)
+
+    def _adjust_priority(self, key: str) -> None:
+        """Adjust the priority based on key press."""
+        priority_input = self.query_one("#priority-input", Input)
+        current_value = priority_input.value.strip().upper()
+
+        if not current_value or current_value < "A" or current_value > "Z":
+            # Start at A if empty or invalid
+            priority_input.value = "A"
+            return
+
+        if key == "up":
+            # A -> B -> C ... -> Z (wraps to A)
+            new_char = chr(ord(current_value) + 1) if current_value < "Z" else "A"
+        else:  # down
+            # Z -> Y -> X ... -> A (wraps to Z)
+            new_char = chr(ord(current_value) - 1) if current_value > "A" else "Z"
+
+        priority_input.value = new_char
 
     def _adjust_due_date(self, key: str) -> None:
         """Adjust the due date based on key press."""
