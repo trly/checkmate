@@ -232,9 +232,10 @@ class CreateTaskScreen(Screen):
             task_input.text = self.editing_task.description
             if self.editing_task.priority:
                 priority_input.value = self.editing_task.priority
-            # Extract due date
             if self.editing_task.due_date:
                 due_input.value = self.editing_task.due_date.strftime("%Y-%m-%d")
+        else:
+            due_input.value = date.today().strftime("%Y-%m-%d")
 
         task_input.focus()
 
