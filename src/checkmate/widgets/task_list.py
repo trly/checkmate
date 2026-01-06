@@ -87,6 +87,11 @@ class TaskRow(Static):
         border: none;
     }
 
+    TaskRow > Vertical {
+        height: auto;
+        width: 100%;
+    }
+
     TaskRow .description-line {
         width: 100%;
         height: auto;
