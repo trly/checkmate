@@ -111,3 +111,53 @@ def load_config_file(home_dir: str | None = None) -> dict[str, str]:
         return load_config(content)
     except OSError:
         return {}
+
+
+VALID_SORT_ATTRIBUTES = frozenset({"priority", "context", "project", "due", "created"})
+
+
+def save_config_value(
+    key: str, value: str, home_dir: str | None = None
+) -> None:
+    """
+    Save a single key=value pair to the .todo/config file.
+
+    Updates the key in-place if it exists, otherwise appends it.
+    Creates the file and directory if they don't exist.
+
+    Args:
+        key: Configuration key to set
+        value: Configuration value to set
+        home_dir: Override home directory (useful for testing)
+    """
+    if home_dir is None:
+        home_dir = os.path.expanduser("~")
+
+    config_dir = Path(home_dir) / ".todo"
+    config_path = config_dir / "config"
+
+    # Read existing lines (preserving comments and structure)
+    lines: list[str] = []
+    if config_path.exists():
+        try:
+            lines = config_path.read_text().splitlines()
+        except OSError:
+            lines = []
+
+    # Try to update existing key in-place
+    updated = False
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#") and "=" in stripped:
+            existing_key, _ = stripped.split("=", 1)
+            if existing_key.strip() == key:
+                lines[i] = f"{key}={value}"
+                updated = True
+                break
+
+    if not updated:
+        lines.append(f"{key}={value}")
+
+    # Write back
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_path.write_text("\n".join(lines) + "\n")

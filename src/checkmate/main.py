@@ -22,10 +22,11 @@ class CheckmateApp(App):
         Binding("question_mark", "toggle_help_panel", "Help", key_display="?"),
     ]
 
-    def __init__(self, service: TodoService):
+    def __init__(self, service: TodoService, config: dict[str, str] | None = None):
         self._help_panel_visible = False
         super().__init__()
         self.service = service
+        self.config = config or {}
 
     async def on_mount(self) -> None:
         """Push the main screen when the app starts."""
@@ -75,7 +76,7 @@ def main():
         # Launch app with discovered file paths
         repository = FileTaskRepository(todo_file=todo_file, done_file=done_file)
         service = TodoService(repository)
-        app = CheckmateApp(service=service)
+        app = CheckmateApp(service=service, config=config)
         app.run()
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)

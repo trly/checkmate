@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from ..main import CheckmateApp
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.command import DiscoveryHit, Hit, Hits, Provider
 from textual.containers import Vertical
 from textual.screen import Screen
@@ -109,17 +110,17 @@ class TodoListScreen(Screen):
     COMMANDS: ClassVar[set] = {SortCommandProvider}
 
     BINDINGS: ClassVar[list] = [
-        ("a", "add_todo", "Add Todo"),
-        ("d", "delete_todo", "Delete Todo"),
-        ("D", "force_delete_todo", "Force Delete"),
-        ("e", "edit_todo", "Edit Todo"),
+        ("a", "add_todo", "Add"),
+        ("e", "edit_todo", "Edit"),
+        ("d", "delete_todo", "Delete"),
         ("f", "filter", "Filter"),
-        ("F", "clear_filter", "Clear Filter"),
-        ("C", "toggle_completed", "Toggle Completed"),
-        ("j", "cursor_down", "Down"),
-        ("k", "cursor_up", "Up"),
-        ("1", "focus_todo", "Todo List"),
-        ("2", "focus_completed", "Done List"),
+        Binding("D", "force_delete_todo", "Force Delete", show=False),
+        Binding("F", "clear_filter", "Clear Filter", show=False),
+        Binding("C", "toggle_completed", "Toggle Completed", show=False),
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up", show=False),
+        Binding("1", "focus_todo", "Todo List", show=False),
+        Binding("2", "focus_completed", "Done List", show=False),
     ]
 
     def __init__(self):

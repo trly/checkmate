@@ -13,6 +13,8 @@ from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.reactive import reactive
 from textual.widgets import Static
 
+from ..config import VALID_SORT_ATTRIBUTES as _VALID_SORT_ATTRIBUTES
+from ..config import save_config_value
 from ..exceptions import TaskOperationError
 from ..models import Task
 from ..services import TodoService
@@ -390,6 +392,10 @@ class TaskList(VerticalScroll):
         self._initialized = True
         self.refresh_tasks()
 
+        sort_attr = self.app.config.get("SORT_ATTRIBUTE", "")
+        if sort_attr in _VALID_SORT_ATTRIBUTES:
+            self.apply_sort(sort_attr, persist=False)
+
     def on_resize(self, _event) -> None:
         """Handle terminal resize."""
         if self._initialized:
@@ -519,12 +525,13 @@ class TaskList(VerticalScroll):
         else:
             self.app.notify("No task selected", severity="warning", timeout=2.0)
 
-    def apply_sort(self, attribute: str) -> None:
+    def apply_sort(self, attribute: str, *, persist: bool = True) -> None:
         """Apply sorting to tasks by the specified attribute.
 
         Args:
             attribute: One of 'priority', 'context', 'project', 'due',
                 'created'
+            persist: Whether to save the sort preference to config
         """
         if attribute == "priority":
             self.tasks = sorted(
@@ -562,6 +569,9 @@ class TaskList(VerticalScroll):
 
         # Rebuild layout to show sorted tasks
         self.rebuild_layout()
+
+        if persist:
+            save_config_value("SORT_ATTRIBUTE", attribute)
 
 
 class CompletedTaskList(VerticalScroll):
